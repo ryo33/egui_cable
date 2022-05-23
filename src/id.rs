@@ -3,15 +3,16 @@ use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
+// Low-cost to clone, so avoid use a reference of it for output.
 #[derive(Clone)]
-pub struct PortId {
+pub struct Id {
     id: Arc<dyn Any + Send + Sync + 'static>,
     hash: fn(&dyn Any, &mut &mut dyn Hasher) -> u64,
     eq: fn(&dyn Any, &dyn Any) -> bool,
     debug: fn(&dyn Any) -> &dyn Debug,
 }
 
-impl Debug for PortId {
+impl Debug for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let debug = self.debug;
         f.debug_struct("PortId")
@@ -20,21 +21,21 @@ impl Debug for PortId {
     }
 }
 
-impl Hash for PortId {
+impl Hash for Id {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let hash = &self.hash;
         hash(self.id.as_ref(), &mut (state as &mut dyn Hasher));
     }
 }
 
-impl PartialEq for PortId {
+impl PartialEq for Id {
     fn eq(&self, other: &Self) -> bool {
         let eq = &self.eq;
         eq(self.id.as_ref(), other.id.as_ref())
     }
 }
 
-impl Eq for PortId {}
+impl Eq for Id {}
 
 fn hash<T: Hash + 'static>(id: &dyn Any, hasher: &mut &mut dyn Hasher) -> u64 {
     id.downcast_ref::<T>().unwrap().hash(hasher);
@@ -53,9 +54,9 @@ fn debug<T: Debug + 'static>(id: &dyn Any) -> &dyn Debug {
     id.downcast_ref::<T>().unwrap()
 }
 
-impl PortId {
+impl Id {
     pub fn new<T: Hash + Eq + Debug + Send + Sync + 'static>(id: T) -> Self {
-        PortId {
+        Id {
             id: Arc::new(id),
             hash: hash::<T>,
             eq: eq::<T>,
@@ -64,7 +65,7 @@ impl PortId {
     }
 }
 
-impl<T: 'static> AsRef<T> for PortId {
+impl<T: 'static> AsRef<T> for Id {
     fn as_ref(&self) -> &T {
         self.id
             .downcast_ref()
@@ -80,16 +81,16 @@ mod tests {
 
     #[test]
     fn as_ref() {
-        let id = PortId::new(42 as usize);
+        let id = Id::new(42 as usize);
         assert_eq!(id.as_ref() as &usize, &42);
     }
 
     #[test]
     fn partial_eq() {
-        let id1 = PortId::new(42 as usize);
-        let id2 = PortId::new(42 as usize);
-        let id3 = PortId::new(43 as usize);
-        let id4 = PortId::new(42 as u8);
+        let id1 = Id::new(42 as usize);
+        let id2 = Id::new(42 as usize);
+        let id3 = Id::new(43 as usize);
+        let id4 = Id::new(42 as u8);
         assert_eq!(id1, id2);
         assert_ne!(id1, id3);
         assert_ne!(id1, id4);
@@ -97,10 +98,10 @@ mod tests {
 
     #[test]
     fn hash() {
-        let id1 = PortId::new(42 as usize);
-        let id2 = PortId::new(42 as usize);
-        let id3 = PortId::new(43 as usize);
-        let id4 = PortId::new(42 as u8);
+        let id1 = Id::new(42 as usize);
+        let id2 = Id::new(42 as usize);
+        let id3 = Id::new(43 as usize);
+        let id4 = Id::new(42 as u8);
         let mut set = HashSet::new();
         set.insert(id1);
         set.insert(id2);

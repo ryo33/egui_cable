@@ -1,43 +1,51 @@
-use egui::{vec2, Id, Pos2, Sense, Widget};
+use std::{any::Any, sync::Arc};
 
-use crate::{
-    cable::{Cable, CableTo},
-    port_id::PortId,
-    state::State,
-};
+use egui::{vec2, Id, Sense, Widget};
+
+use crate::state::State;
+
+pub type PortId = Id;
 
 #[derive(Debug)]
 pub struct Port {
+    data: Arc<dyn Any>,
     port_id: PortId,
-    cables: Vec<CableTo>,
 }
 
 impl Port {
-    pub fn new(port_id: PortId) -> Self {
+    pub fn new<T: 'static>(port_id: PortId, data: T) -> Self {
         Port {
+            data: Arc::new(data),
             port_id,
-            cables: Vec::new(),
         }
     }
-    pub fn with_cable(mut self, to: PortId, cable: Cable) -> Self {
-        self.cables.push(CableTo { cable, to });
-        self
+
+    pub fn unit(port_id: PortId) -> Self {
+        Self::new(port_id, ())
+    }
+
+    pub fn downcast_ref<T: 'static>(&self) -> Option<&T> {
+        self.data.downcast_ref()
     }
 }
 
 impl Widget for Port {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let mut state = ui
-            .data()
-            .get_persisted::<State>(Id::null())
-            .unwrap_or_default();
+        let mut state: State = State::clone(
+            &ui.data()
+                .get_persisted::<Arc<State>>(Id::null())
+                .unwrap_or_default(),
+        );
         let size = 12.0;
-        let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::drag());
+        let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
         let mut visuals = ui.visuals().widgets.active;
         let pos = response.rect.center();
         state.update_port_pos(self.port_id.clone(), pos.clone());
         if response.hovered {
             visuals = ui.visuals().widgets.hovered;
+        }
+        if ui.rect_contains_pointer(response.rect) {
+            state.update_hovered_port_id(self.port_id);
         }
         ui.painter().add(epaint::CircleShape {
             center: rect.center(),
@@ -45,24 +53,7 @@ impl Widget for Port {
             fill: visuals.bg_fill,
             stroke: visuals.fg_stroke,
         });
-
-        if response.drag_started() {
-            state.drag_start_port = Some(self.port_id.clone());
-        }
-        if response.dragged() {
-            let cursor_pos = ui.input().pointer.hover_pos().unwrap_or(Pos2::ZERO);
-            ui.painter()
-                .line_segment([pos.clone(), cursor_pos], visuals.fg_stroke);
-        }
-        println!("begin {:?}", self.port_id);
-        for cable in &self.cables {
-            if let Some(to) = state.port_pos(&cable.to) {
-                ui.painter()
-                    .line_segment([pos, to.clone()], visuals.fg_stroke);
-            }
-        }
-        println!("end {:?}", self.port_id);
-        ui.data().insert_persisted(Id::null(), state);
+        state.store(ui);
         response
     }
 }
