@@ -1,3 +1,3 @@
 # egui_cable
 
-A data-oriented, extensible, generic widget to connect anything by cables 
+A data-oriented, extensible, generic widget to connect ports by cables 
