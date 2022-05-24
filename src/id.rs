@@ -81,16 +81,16 @@ mod tests {
 
     #[test]
     fn as_ref() {
-        let id = Id::new(42 as usize);
+        let id = Id::new(42_usize);
         assert_eq!(id.as_ref() as &usize, &42);
     }
 
     #[test]
     fn partial_eq() {
-        let id1 = Id::new(42 as usize);
-        let id2 = Id::new(42 as usize);
-        let id3 = Id::new(43 as usize);
-        let id4 = Id::new(42 as u8);
+        let id1 = Id::new(42_usize);
+        let id2 = Id::new(42_usize);
+        let id3 = Id::new(43_usize);
+        let id4 = Id::new(42_u8);
         assert_eq!(id1, id2);
         assert_ne!(id1, id3);
         assert_ne!(id1, id4);
@@ -98,10 +98,10 @@ mod tests {
 
     #[test]
     fn hash() {
-        let id1 = Id::new(42 as usize);
-        let id2 = Id::new(42 as usize);
-        let id3 = Id::new(43 as usize);
-        let id4 = Id::new(42 as u8);
+        let id1 = Id::new(42_usize);
+        let id2 = Id::new(42_usize);
+        let id3 = Id::new(43_usize);
+        let id4 = Id::new(42_u8);
         let mut set = HashSet::new();
         set.insert(id1);
         set.insert(id2);

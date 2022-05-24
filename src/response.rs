@@ -67,34 +67,26 @@ impl ResponseExt for Response {
     }
 
     fn in_disconnected(&self) -> bool {
-        if let Some(Event::Disconnected {
-            plug_type: PlugType::In,
-            ..
-        }) = self.cable_event()
-        {
-            true
-        } else {
-            false
-        }
+        matches!(
+            self.cable_event(),
+            Some(Event::Disconnected {
+                plug_type: PlugType::In,
+                ..
+            })
+        )
     }
 
     fn out_disconnected(&self) -> bool {
-        if let Some(Event::Disconnected {
-            plug_type: PlugType::Out,
-            ..
-        }) = self.cable_event()
-        {
-            true
-        } else {
-            false
-        }
+        matches!(
+            self.cable_event(),
+            Some(Event::Disconnected {
+                plug_type: PlugType::Out,
+                ..
+            })
+        )
     }
 
     fn disconnected(&self) -> bool {
-        if let Some(Event::Disconnected { .. }) = self.cable_event() {
-            true
-        } else {
-            false
-        }
+        matches!(self.cable_event(), Some(Event::Disconnected { .. }))
     }
 }

@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{pos2, Order};
+use egui::pos2;
 use egui_cable::prelude::*;
 
 fn main() {
@@ -25,21 +25,17 @@ impl eframe::App for MyEguiApp {
             .default_pos(pos2(200.0, 20.0))
             .show(ctx, |ui| {
                 ui.add(Port::new(1));
+                ui.add_space(10.0);
                 ui.add(Port::new(2));
             });
         egui::Window::new("My window 3")
             .default_pos(pos2(200.0, 200.0))
             .show(ctx, |ui| {
                 ui.add(Port::new(3));
-            });
 
-        egui::Area::new("cables")
-            .order(Order::Foreground)
-            .show(ctx, |ui| {
                 ui.add(Cable::new(0, PortId::new(0), PortId::new(1)));
                 ui.add(Cable::new(1, PortId::new(0), PortId::new(3)));
                 ui.add(Cable::new(2, PortId::new(2), PortId::new(3)));
-                ui.add(Cable::new(3, PortId::new(1), PortId::new(1)));
             });
     }
 

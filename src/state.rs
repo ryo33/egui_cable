@@ -1,7 +1,10 @@
-use std::{collections::HashMap, ops::DerefMut, sync::Arc};
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
 
 use egui::{util::IdTypeMap, Id, Pos2, Ui};
 
+use crate::cable_state::CableState;
 use crate::{cable::CableId, plug::PlugId, prelude::*};
 
 #[derive(Default, Clone, Debug)]
@@ -13,9 +16,8 @@ pub(crate) struct State {
 
 #[derive(Default, Clone, Debug)]
 pub(crate) struct GenerationState {
-    port_pos: HashMap<PortId, Pos2>,
+    kv: HashMap<&'static str, HashMap<Id, Arc<dyn Any + Send + Sync + 'static>>>,
     hovered_port_id: Option<PortId>,
-    plug_pos: HashMap<PlugId, Pos2>,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -24,6 +26,10 @@ pub(crate) struct EphemeralState {
     pub event: HashMap<CableId, Event>,
 }
 
+const PORT_POS: &str = "port_pos";
+const PLUG_POS: &str = "plug_pos";
+const CABLE_STATE: &str = "cable_state";
+
 impl State {
     pub fn next_generation(&mut self) {
         std::mem::swap(&mut self.previous, &mut self.current);
@@ -31,18 +37,47 @@ impl State {
         self.ephemeral = Default::default();
     }
 
-    pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
-        if self.current.port_pos.contains_key(&port_id) {
-            self.next_generation();
-        }
-        self.current.port_pos.insert(port_id, pos);
+    fn update_kv<K, V>(&mut self, key: &'static str, id: K, data: V)
+    where
+        K: Hash + Eq + Debug + Send + Sync + 'static,
+        V: Send + Sync + 'static,
+    {
+        let kv = self.current.kv.entry(key).or_default();
+        kv.insert(Id::new(id), Arc::new(data));
     }
 
-    pub fn port_pos(&self, port_id: &PortId) -> Option<&Pos2> {
-        self.current
-            .port_pos
-            .get(port_id)
-            .or_else(|| self.previous.port_pos.get(port_id))
+    fn get_kv<K, V>(&self, key: &'static str, id: &K) -> Option<V>
+    where
+        K: Clone + Hash + Eq + Debug + Send + Sync + 'static,
+        V: Clone + Send + Sync + 'static,
+    {
+        let get = |generation: &GenerationState| {
+            generation
+                .kv
+                .get(key)
+                .and_then(|kv| kv.get(&Id::new(id.clone())))
+                .cloned()
+        };
+        get(&self.current)
+            .or_else(|| get(&self.previous))
+            .map(|data| data.downcast_ref::<V>().unwrap().clone())
+    }
+
+    pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
+        if self
+            .current
+            .kv
+            .get(PORT_POS)
+            .and_then(|kv| kv.get(&Id::new(port_id)))
+            .is_some()
+        {
+            self.next_generation();
+        }
+        self.update_kv(PORT_POS, port_id, pos);
+    }
+
+    pub fn port_pos(&self, port_id: &PortId) -> Option<Pos2> {
+        self.get_kv(PORT_POS, port_id)
     }
 
     pub fn update_hovered_port_id(&mut self, port_id: PortId) {
@@ -53,20 +88,24 @@ impl State {
         self.current
             .hovered_port_id
             .as_ref()
-            .or_else(|| self.previous.hovered_port_id.as_ref())
+            .or(self.previous.hovered_port_id.as_ref())
             .cloned()
     }
 
     pub fn update_plug_pos(&mut self, id: PlugId, pos: Pos2) {
-        self.current.plug_pos.insert(id, pos);
+        self.update_kv(PLUG_POS, id, pos);
     }
 
     pub fn plug_pos(&self, id: &PlugId) -> Option<Pos2> {
-        self.current
-            .plug_pos
-            .get(id)
-            .or_else(|| self.previous.plug_pos.get(id))
-            .cloned()
+        self.get_kv(PLUG_POS, id)
+    }
+
+    pub fn update_cable_state(&mut self, id: CableId, pos: CableState) {
+        self.update_kv(CABLE_STATE, id, pos);
+    }
+
+    pub fn cable_state(&self, id: &CableId) -> Option<CableState> {
+        self.get_kv(CABLE_STATE, id)
     }
 
     pub fn get_cloned(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
@@ -89,53 +128,7 @@ impl State {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cable::CableId, plug::PlugType};
-
     use super::*;
-
-    #[test]
-    fn update_port_pos_inserts_current_port_pos() {
-        let mut state = State::default();
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 2.0));
-        state.update_port_pos(PortId::new(2), Pos2::new(2.0, 2.0));
-        assert_eq!(
-            state.current.port_pos,
-            [
-                (PortId::new(1), Pos2::new(1.0, 2.0)),
-                (PortId::new(2), Pos2::new(2.0, 2.0))
-            ]
-            .into_iter()
-            .collect()
-        );
-        assert_eq!(state.previous.port_pos, [].into_iter().collect());
-    }
-
-    #[test]
-    fn update_port_pos_use_previous_port_pos() {
-        let mut state = State::default();
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 2.0));
-        state.update_port_pos(PortId::new(2), Pos2::new(2.0, 2.0));
-        state.update_port_pos(PortId::new(3), Pos2::new(3.0, 2.0));
-        assert_eq!(state.previous.port_pos.len(), 0);
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 3.0));
-
-        assert_eq!(
-            state.current.port_pos,
-            [(PortId::new(1), Pos2::new(1.0, 3.0)),]
-                .into_iter()
-                .collect()
-        );
-        assert_eq!(
-            state.previous.port_pos,
-            [
-                (PortId::new(1), Pos2::new(1.0, 2.0)),
-                (PortId::new(2), Pos2::new(2.0, 2.0)),
-                (PortId::new(3), Pos2::new(3.0, 2.0)),
-            ]
-            .into_iter()
-            .collect()
-        );
-    }
 
     #[test]
     fn port_pos() {
@@ -147,11 +140,15 @@ mod tests {
         // second gen
         state.update_port_pos(PortId::new(1), Pos2::new(1.0, 3.0));
         state.update_port_pos(PortId::new(2), Pos2::new(2.0, 3.0));
+
+        // assert not advanced for third gen
+        assert_eq!(state.port_pos(&PortId::new(3)), Some(Pos2::new(3.0, 2.0)));
+
         // third gen
         state.update_port_pos(PortId::new(1), Pos2::new(1.0, 4.0));
 
-        assert_eq!(state.port_pos(&PortId::new(1)), Some(&Pos2::new(1.0, 4.0)));
-        assert_eq!(state.port_pos(&PortId::new(2)), Some(&Pos2::new(2.0, 3.0)));
+        assert_eq!(state.port_pos(&PortId::new(1)), Some(Pos2::new(1.0, 4.0)));
+        assert_eq!(state.port_pos(&PortId::new(2)), Some(Pos2::new(2.0, 3.0)));
         assert_eq!(state.port_pos(&PortId::new(3)), None);
     }
 
@@ -178,62 +175,5 @@ mod tests {
         state.previous.hovered_port_id = Some(PortId::new(0));
         state.current.hovered_port_id = Some(PortId::new(1));
         assert_eq!(state.hovered_port_id(), Some(PortId::new(1)));
-    }
-
-    #[test]
-    fn test_update_plug_pos() {
-        let mut state = State::default();
-        let id1 = PlugId::new(CableId::new(0), PlugType::In);
-        let id2 = PlugId::new(CableId::new(0), PlugType::Out);
-        state.update_plug_pos(id1.clone(), Pos2::new(1.0, 2.0));
-        state.update_plug_pos(id2.clone(), Pos2::new(1.0, 3.0));
-        assert_eq!(
-            state.current.plug_pos,
-            [(id1, Pos2::new(1.0, 2.0)), (id2, Pos2::new(1.0, 3.0))]
-                .into_iter()
-                .collect()
-        );
-    }
-
-    #[test]
-    fn test_plug_pos() {
-        assert_eq!(
-            State::default().plug_pos(&PlugId::new(CableId::new(0), PlugType::In)),
-            None
-        );
-
-        let mut state = State::default();
-        state.current.plug_pos.insert(
-            PlugId::new(CableId::new(0), PlugType::In),
-            Pos2::new(1.0, 2.0),
-        );
-        assert_eq!(
-            state.plug_pos(&PlugId::new(CableId::new(0), PlugType::In)),
-            Some(Pos2::new(1.0, 2.0))
-        );
-
-        let mut state = State::default();
-        state.previous.plug_pos.insert(
-            PlugId::new(CableId::new(0), PlugType::In),
-            Pos2::new(1.0, 2.0),
-        );
-        assert_eq!(
-            state.plug_pos(&PlugId::new(CableId::new(0), PlugType::In)),
-            Some(Pos2::new(1.0, 2.0))
-        );
-
-        let mut state = State::default();
-        state.previous.plug_pos.insert(
-            PlugId::new(CableId::new(0), PlugType::In),
-            Pos2::new(1.0, 2.0),
-        );
-        state.current.plug_pos.insert(
-            PlugId::new(CableId::new(0), PlugType::In),
-            Pos2::new(1.0, 3.0),
-        );
-        assert_eq!(
-            state.plug_pos(&PlugId::new(CableId::new(0), PlugType::In)),
-            Some(Pos2::new(1.0, 3.0))
-        );
     }
 }

@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use egui::{vec2, Id, Sense, Widget};
 
-use crate::state::State;
+use crate::{state::State, utils::visual};
 
 pub type PortId = Id;
 
@@ -25,13 +25,12 @@ impl Widget for Port {
         let mut state = State::get_cloned(ui.data());
         let size = 12.0;
         let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
-        let mut visuals = ui.visuals().widgets.active;
         let pos = response.rect.center();
-        state.update_port_pos(self.port_id.clone(), pos.clone());
+        state.update_port_pos(self.port_id, pos);
         if response.hovered {
-            visuals = ui.visuals().widgets.hovered;
             state.update_hovered_port_id(self.port_id);
         }
+        let visuals = visual(ui, &response);
         ui.painter().add(epaint::CircleShape {
             center: rect.center(),
             radius: rect.height() / 2.0,
