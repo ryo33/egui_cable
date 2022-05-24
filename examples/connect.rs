@@ -32,8 +32,8 @@ impl eframe::App for MyEguiApp {
                     self.connected.push((PortId::new(0), port_id));
                 }
             }
-            for (i, (a, b)) in self.connected.iter().enumerate() {
-                ui.add(Cable::new(i, *a, *b));
+            for (a, b) in self.connected.iter() {
+                ui.add(Cable::new((*a, *b), *a, *b));
             }
         });
     }

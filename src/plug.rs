@@ -79,9 +79,7 @@ impl Widget for Plug {
                         Rect::from_center_size(pos, vec2(size, size)),
                         Sense::drag(),
                     );
-                    if response.dragged() {
-                        pos += response.drag_delta();
-                    }
+                    pos += response.drag_delta();
                     state.update_plug_pos(id.clone(), pos);
                     if response.drag_released() {
                         if let Some(port_id) = state.hovered_port_id() {

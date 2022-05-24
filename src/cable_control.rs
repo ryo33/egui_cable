@@ -16,7 +16,7 @@ impl Widget for CableControl {
             .show(ui.ctx(), |ui| {
                 let response = ui.allocate_rect(
                     Rect::from_center_size(self.pos, vec2(size, size)),
-                    Sense::drag(),
+                    Sense::click_and_drag(),
                 );
                 let painter = Painter::new(ui.ctx().clone(), ui.layer_id(), Rect::EVERYTHING);
                 let visuals = visual(ui, &response);

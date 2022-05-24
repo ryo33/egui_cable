@@ -56,7 +56,7 @@ impl Widget for Cable {
                 let out_pos = out_response.rect.center();
                 let midpoint = (in_pos.to_vec2() + out_pos.to_vec2()) / 2.0;
                 let mut cable_state = state.cable_state(&self.id).unwrap_or_else(|| CableState {
-                    relative_control_point_pos: vec2(0.0, 0.0),
+                    relative_control_point_pos: vec2(10.0, 25.0),
                     dragged: false,
                 });
                 let control_point_pos =
