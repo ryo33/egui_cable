@@ -67,11 +67,11 @@ impl Widget for Plug {
         let mut pos = if let Some(port_id) = &self.plug_to {
             state.port_pos(port_id).unwrap_or(pos2(0.0, 0.0))
         } else {
-            // unwrap is safe because Cable widget assigns a default value
+            // self.pos.unwrap is safe because Cable widget assigns a default value
             state.plug_pos(&id).unwrap_or(self.pos.unwrap())
         };
         egui::Area::new(id.clone())
-            .current_pos(pos + vec2(size / 2.0, size / 2.0))
+            .current_pos(pos - vec2(size / 2.0, size / 2.0))
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
@@ -100,7 +100,13 @@ impl Widget for Plug {
                     let visuals = widget_visuals(ui, &response);
                     ui.painter().add(epaint::CircleShape {
                         center: pos,
-                        radius: size / 3.0,
+                        radius: size / 2.0,
+                        fill: visuals.bg_fill,
+                        stroke: visuals.fg_stroke,
+                    });
+                    ui.painter().add(epaint::CircleShape {
+                        center: pos,
+                        radius: size / 4.0,
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });

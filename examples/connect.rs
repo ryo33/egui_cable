@@ -26,7 +26,7 @@ impl eframe::App for MyEguiApp {
 
             if self.connected.is_empty() {
                 if let Some(port_id) = ui
-                    .add(Cable::new(-1, PortId::new(0), Plug::new()))
+                    .add(Cable::new(0, PortId::new(0), Plug::new()))
                     .connected_to()
                 {
                     self.connected.push((PortId::new(0), port_id));

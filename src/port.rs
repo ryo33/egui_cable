@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{vec2, Id, Sense, Widget};
+use egui::{pos2, vec2, Id, Sense, Widget};
 
 use crate::{state::State, utils::widget_visuals};
 
@@ -27,10 +27,20 @@ impl Widget for Port {
         let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
         let pos = response.rect.center();
         state.update_port_pos(self.port_id, pos);
-        if response.hovered {
+        let hovered = response.rect.contains(
+            ui.input()
+                .pointer
+                .interact_pos()
+                .unwrap_or(pos2(-10.0, -10.0)),
+        );
+        if hovered {
             state.update_hovered_port_id(self.port_id);
         }
-        let visuals = widget_visuals(ui, &response);
+        let visuals = if hovered {
+            ui.visuals().widgets.hovered
+        } else {
+            widget_visuals(ui, &response)
+        };
         ui.painter().add(epaint::CircleShape {
             center: rect.center(),
             radius: rect.height() / 2.0,

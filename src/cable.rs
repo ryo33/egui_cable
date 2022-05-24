@@ -9,7 +9,8 @@ use crate::{
     cable_state::CableState,
     plug::{PlugId, PlugType},
     prelude::*,
-    state::State, utils::widget_visuals,
+    state::State,
+    utils::widget_visuals,
 };
 
 pub type CableId = Id;
@@ -49,7 +50,6 @@ impl Widget for Cable {
             .current_pos(pos2(0.0, 0.0))
             .interactable(false)
             .show(ui.ctx(), |ui| {
-                let mut state = State::get_cloned(ui.data());
                 let default_in_pos = available_rect.left_top() + vec2(10.0, 0.0);
                 let default_out_pos = available_rect.left_top() + vec2(50.0, 0.0);
                 let in_response = ui.add(
@@ -62,6 +62,9 @@ impl Widget for Cable {
                         .id(PlugId::new(self.id, PlugType::Out))
                         .default_pos(default_out_pos),
                 );
+
+                // This must be after ui.add(plug) because state might be modified.
+                let mut state = State::get_cloned(ui.data());
 
                 let in_pos = in_response.rect.center();
                 let out_pos = out_response.rect.center();
@@ -86,7 +89,11 @@ impl Widget for Cable {
                 let pointer_pos = ui.input().pointer.interact_pos();
                 let is_close = bezier_close(&bezier, pointer_pos.unwrap_or(far), 300.0);
 
-                let line_hovered = is_close || cable_state.dragged;
+                let line_hovered = (is_close || cable_state.dragged)
+                    && !in_response.hovered()
+                    && !in_response.dragged()
+                    && !out_response.hovered()
+                    && !out_response.dragged();
 
                 let cable_control_pos = bezier.sample(0.5);
                 let response = if line_hovered {
