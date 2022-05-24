@@ -1,6 +1,6 @@
-use egui::{pos2, vec2, Id, Pos2, Rect, Sense, Widget};
+use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Widget};
 
-use crate::{cable::CableId, event::Event, state::State, utils::visual};
+use crate::{cable::CableId, event::Event, state::State, utils::widget_visuals};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PlugType {
@@ -43,6 +43,11 @@ impl Plug {
         }
     }
 
+    pub(crate) fn default_pos(mut self, pos: Pos2) -> Self {
+        self.pos = self.pos.or(Some(pos));
+        self
+    }
+
     pub fn pos(mut self, pos: Pos2) -> Self {
         self.pos = Some(pos);
         self
@@ -62,12 +67,12 @@ impl Widget for Plug {
         let mut pos = if let Some(port_id) = &self.plug_to {
             state.port_pos(port_id).unwrap_or(pos2(0.0, 0.0))
         } else {
-            state.plug_pos(&id).unwrap_or(
-                ui.available_rect_before_wrap().left_top() + vec2(size / 2.0, size / 2.0),
-            )
+            // unwrap is safe because Cable widget assigns a default value
+            state.plug_pos(&id).unwrap_or(self.pos.unwrap())
         };
         egui::Area::new(id.clone())
             .current_pos(pos + vec2(size / 2.0, size / 2.0))
+            .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
                     ui.allocate_rect(
@@ -92,7 +97,7 @@ impl Widget for Plug {
                             );
                         }
                     }
-                    let visuals = visual(ui, &response);
+                    let visuals = widget_visuals(ui, &response);
                     ui.painter().add(epaint::CircleShape {
                         center: pos,
                         radius: size / 3.0,

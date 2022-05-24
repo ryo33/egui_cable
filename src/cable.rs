@@ -9,7 +9,7 @@ use crate::{
     cable_state::CableState,
     plug::{PlugId, PlugType},
     prelude::*,
-    state::State,
+    state::State, utils::widget_visuals,
 };
 
 pub type CableId = Id;
@@ -43,20 +43,32 @@ impl From<Id> for Plug {
 
 impl Widget for Cable {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let available_rect = ui.available_rect_before_wrap();
         egui::Area::new(self.id)
             .order(Order::Foreground)
             .current_pos(pos2(0.0, 0.0))
             .interactable(false)
             .show(ui.ctx(), |ui| {
                 let mut state = State::get_cloned(ui.data());
-                let in_response = ui.add(self.in_plug.id(PlugId::new(self.id, PlugType::In)));
-                let out_response = ui.add(self.out_plug.id(PlugId::new(self.id, PlugType::Out)));
+                let default_in_pos = available_rect.left_top() + vec2(10.0, 0.0);
+                let default_out_pos = available_rect.left_top() + vec2(50.0, 0.0);
+                let in_response = ui.add(
+                    self.in_plug
+                        .id(PlugId::new(self.id, PlugType::In))
+                        .default_pos(default_in_pos),
+                );
+                let out_response = ui.add(
+                    self.out_plug
+                        .id(PlugId::new(self.id, PlugType::Out))
+                        .default_pos(default_out_pos),
+                );
 
                 let in_pos = in_response.rect.center();
                 let out_pos = out_response.rect.center();
                 let midpoint = (in_pos.to_vec2() + out_pos.to_vec2()) / 2.0;
                 let mut cable_state = state.cable_state(&self.id).unwrap_or_else(|| CableState {
                     relative_control_point_pos: vec2(10.0, 25.0),
+                    active: false,
                     dragged: false,
                 });
                 let control_point_pos =
@@ -75,12 +87,6 @@ impl Widget for Cable {
                 let is_close = bezier_close(&bezier, pointer_pos.unwrap_or(far), 300.0);
 
                 let line_hovered = is_close || cable_state.dragged;
-                let cable_visual = if line_hovered {
-                    ui.visuals().widgets.hovered
-                } else {
-                    ui.visuals().widgets.inactive
-                };
-                bezier.stroke = cable_visual.fg_stroke;
 
                 let cable_control_pos = bezier.sample(0.5);
                 let response = if line_hovered {
@@ -102,13 +108,25 @@ impl Widget for Cable {
                 if response.drag_released() {
                     cable_state.dragged = false;
                 }
-                if cable_state.dragged {
+                if response.dragged() {
                     if let Some(pointer_pos) = pointer_pos {
                         cable_state.relative_control_point_pos += pointer_pos - cable_control_pos;
                     }
                 }
+                if response.clicked() {
+                    cable_state.active = true;
+                }
+                if response.clicked_elsewhere() {
+                    cable_state.active = false;
+                }
 
                 // Paint bezier curve
+                let cable_visual = if cable_state.active {
+                    ui.visuals().widgets.active
+                } else {
+                    widget_visuals(ui, &response)
+                };
+                bezier.stroke = cable_visual.fg_stroke;
                 let painter =
                     Painter::new(ui.ctx().clone(), egui::LayerId::debug(), Rect::EVERYTHING);
                 painter.add(bezier);

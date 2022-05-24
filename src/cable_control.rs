@@ -1,6 +1,6 @@
 use egui::{vec2, Order, Painter, Pos2, Rect, Sense, Widget};
 
-use crate::{cable::CableId, utils::visual};
+use crate::{cable::CableId, utils::widget_visuals};
 
 pub(crate) struct CableControl {
     pub id: CableId,
@@ -19,7 +19,7 @@ impl Widget for CableControl {
                     Sense::click_and_drag(),
                 );
                 let painter = Painter::new(ui.ctx().clone(), ui.layer_id(), Rect::EVERYTHING);
-                let visuals = visual(ui, &response);
+                let visuals = widget_visuals(ui, &response);
                 painter.rect(response.rect, 3.0, visuals.bg_fill, visuals.fg_stroke);
                 response
             })
