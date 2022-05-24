@@ -1,5 +1,10 @@
 # egui_cable
 
+[![GitHub](https://img.shields.io/badge/GitHub-ryo33/egui_cable-222222)](https://github.com/ryo33/mry)
+![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)
+[![Crates.io](https://img.shields.io/crates/v/egui_cable)](https://crates.io/crates/egui_cable)
+[![docs.rs](https://img.shields.io/docsrs/egui_cable)](https://docs.rs/egui_cable)
+
 A generic and extensible data-oriented widget for connecting ports by cables.
 
 I create this for the visual programming editor of [Hihaheho/Desk](https://github.com/Hihaheho/Desk).
