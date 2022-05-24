@@ -68,7 +68,7 @@ impl Widget for Plug {
             state.port_pos(port_id).unwrap_or(pos2(0.0, 0.0))
         } else {
             // self.pos.unwrap is safe because Cable widget assigns a default value
-            state.plug_pos(&id).unwrap_or(self.pos.unwrap())
+            state.plug_pos(&id).unwrap_or_else(|| self.pos.unwrap())
         };
         egui::Area::new(id.clone())
             .current_pos(pos - vec2(size / 2.0, size / 2.0))
