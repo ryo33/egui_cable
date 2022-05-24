@@ -19,18 +19,18 @@ impl eframe::App for MyEguiApp {
         egui::Window::new("My window")
             .default_pos(pos2(20.0, 100.0))
             .show(ctx, |ui| {
-                ui.add(Port::unit(PortId::new(0)));
+                ui.add(Port::new(PortId::new(0)));
             });
         egui::Window::new("My window 2")
             .default_pos(pos2(200.0, 20.0))
             .show(ctx, |ui| {
-                ui.add(Port::unit(PortId::new(1)));
-                ui.add(Port::unit(PortId::new(2)));
+                ui.add(Port::new(PortId::new(1)));
+                ui.add(Port::new(PortId::new(2)));
             });
         egui::Window::new("My window 3")
             .default_pos(pos2(200.0, 200.0))
             .show(ctx, |ui| {
-                ui.add(Port::unit(PortId::new(3)));
+                ui.add(Port::new(PortId::new(3)));
             });
 
         egui::Area::new("cables")
@@ -40,18 +40,6 @@ impl eframe::App for MyEguiApp {
                 ui.add(Cable::new(1, PortId::new(0), PortId::new(3)));
                 ui.add(Cable::new(2, PortId::new(2), PortId::new(3)));
                 ui.add(Cable::new(3, PortId::new(1), PortId::new(1)));
-            });
-
-        egui::Window::new("Connect me")
-            .default_pos(pos2(20.0, 300.0))
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.add(Port::unit(PortId::new(4)));
-                    ui.add_space(40.0);
-                    ui.add(Port::unit(PortId::new(5)));
-                });
-
-                ui.add(Cable::new(0, PortId::new(4), Plug::new()));
             });
     }
 

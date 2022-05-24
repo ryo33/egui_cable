@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use egui::{pos2, vec2, Id, Pos2, Rect, Sense, Widget};
 
-use crate::{cable::CableId, state::State};
+use crate::{cable::CableId, event::Event, state::State};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum PlugType {
+pub enum PlugType {
     In,
     Out,
 }
@@ -59,11 +57,7 @@ impl Plug {
 impl Widget for Plug {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let id = self.id.unwrap();
-        let mut state = State::clone(
-            &ui.data()
-                .get_persisted::<Arc<State>>(Id::null())
-                .unwrap_or_default(),
-        );
+        let mut state = State::get_cloned(ui.data());
         let size = 12.0;
         let response = if let Some(port_id) = &self.plug_to {
             let pos = state.port_pos(port_id).cloned().unwrap_or(pos2(0.0, 0.0));
@@ -81,11 +75,17 @@ impl Widget for Plug {
             if response.dragged() {
                 pos += response.drag_delta();
             }
-            state.update_plug_pos(id, pos);
+            state.update_plug_pos(id.clone(), pos);
             if response.drag_released() {
-				if let Some(port_id) = state.hovered_port_id() {
-					// Connected!
-				}
+                if let Some(port_id) = state.hovered_port_id() {
+                    state.ephemeral.event.insert(
+                        id.cable_id,
+                        Event::Connect {
+                            plug_type: id.plug_type,
+                            port_id,
+                        },
+                    );
+                }
             }
             ui.painter().add(epaint::CircleShape {
                 center: pos,

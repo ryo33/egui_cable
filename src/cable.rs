@@ -4,8 +4,10 @@ use std::hash::Hash;
 use egui::{Id, Painter, Rect, Sense, Widget};
 
 use crate::{
+    cable_label::CableLabel,
     plug::{PlugId, PlugType},
     prelude::*,
+    state::State,
 };
 
 pub type CableId = Id;
@@ -51,7 +53,17 @@ impl Widget for Cable {
         let painter = Painter::new(ui.ctx().clone(), response.layer_id, Rect::EVERYTHING);
         painter.line_segment([in_pos, out_pos], ui.visuals().widgets.active.fg_stroke);
 
-        // TODO
-        in_response.union(out_response)
+        let response = ui.add(CableLabel {
+            pos: ((in_pos.to_vec2() + out_pos.to_vec2()) / 2.0).to_pos2(),
+        });
+
+        let mut state = State::get_cloned(ui.data());
+        state
+            .ephemeral
+            .response_id_to_cable_id
+            .insert(response.id, self.id);
+        state.store(ui);
+
+        response
     }
 }

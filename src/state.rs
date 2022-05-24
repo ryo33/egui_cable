@@ -1,13 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, ops::DerefMut, sync::Arc};
 
-use egui::{Id, Pos2, Ui};
+use egui::{util::IdTypeMap, Id, Pos2, Ui};
 
-use crate::{plug::PlugId, prelude::*};
+use crate::{cable::CableId, plug::PlugId, prelude::*};
 
 #[derive(Default, Clone, Debug)]
 pub(crate) struct State {
     previous: GenerationState,
     current: GenerationState,
+    pub ephemeral: EphemeralState,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -17,10 +18,17 @@ pub(crate) struct GenerationState {
     plug_pos: HashMap<PlugId, Pos2>,
 }
 
+#[derive(Default, Clone, Debug)]
+pub(crate) struct EphemeralState {
+    pub response_id_to_cable_id: HashMap<Id, CableId>,
+    pub event: HashMap<CableId, Event>,
+}
+
 impl State {
     pub fn next_generation(&mut self) {
         std::mem::swap(&mut self.previous, &mut self.current);
         self.current = Default::default();
+        self.ephemeral = Default::default();
     }
 
     pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
@@ -59,6 +67,19 @@ impl State {
             .get(id)
             .or_else(|| self.previous.plug_pos.get(id))
             .cloned()
+    }
+
+    pub fn get_cloned(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
+        Self::clone(
+            &data
+                .get_persisted::<Arc<State>>(Id::null())
+                .unwrap_or_default(),
+        )
+    }
+
+    pub fn get(mut data: impl DerefMut<Target = IdTypeMap>) -> Arc<Self> {
+        data.get_persisted::<Arc<State>>(Id::null())
+            .unwrap_or_default()
     }
 
     pub fn store(self, ui: &mut Ui) {
