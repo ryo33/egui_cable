@@ -19,25 +19,17 @@ impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Connect me").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.add(Port::new(PortId::new(0)));
+                ui.add(Port::new(0));
                 ui.add_space(40.0);
-                ui.add(Port::new(PortId::new(1)));
+                ui.add(Port::new(1));
             });
 
             if self.connected.len() == 0 {
-                if let Some(event) = ui
+                if let Some(port_id) = ui
                     .add(Cable::new(-1, PortId::new(0), Plug::new()))
-                    .cable_event()
+                    .connected_to()
                 {
-                    match event {
-                        Event::Connect {
-                            plug_type: _,
-                            port_id,
-                        } => {
-                            self.connected.push((PortId::new(0), port_id));
-                        }
-                        _ => {}
-                    }
+                    self.connected.push((PortId::new(0), port_id));
                 }
             }
             for (i, (a, b)) in self.connected.iter().enumerate() {

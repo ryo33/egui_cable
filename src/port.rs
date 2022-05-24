@@ -1,3 +1,6 @@
+use std::fmt::Debug;
+use std::hash::Hash;
+
 use egui::{vec2, Id, Sense, Widget};
 
 use crate::state::State;
@@ -10,8 +13,10 @@ pub struct Port {
 }
 
 impl Port {
-    pub fn new(port_id: PortId) -> Self {
-        Port { port_id }
+    pub fn new<T: Hash + Eq + Debug + Send + Sync + 'static>(port_id: T) -> Self {
+        Port {
+            port_id: PortId::new(port_id),
+        }
     }
 }
 

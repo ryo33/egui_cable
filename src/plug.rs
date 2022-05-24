@@ -80,7 +80,7 @@ impl Widget for Plug {
                 if let Some(port_id) = state.hovered_port_id() {
                     state.ephemeral.event.insert(
                         id.cable_id,
-                        Event::Connect {
+                        Event::Connected {
                             plug_type: id.plug_type,
                             port_id,
                         },
