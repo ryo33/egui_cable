@@ -30,12 +30,35 @@ pub(crate) struct EphemeralState {
 enum Key {
     PortPos,
     PlugPos,
+    PlugSize,
     CableState,
     HoveredPort,
     DraggedPlug,
 }
 
-use Key::*;
+macro_rules! kvs {
+    ($key:ident, $get:ident, $update:ident, $id:ty, $value:ty) => {
+        pub fn $get(&self, id: &$id) -> Option<$value> {
+            self.get_kv(Key::$key, id)
+        }
+
+        pub fn $update(&mut self, id: $id, value: $value) {
+            self.update_kv(Key::$key, id, value);
+        }
+    };
+}
+
+macro_rules! kv {
+    ($key:ident, $get:ident, $update:ident, $value:ty) => {
+        pub fn $get(&self) -> Option<$value> {
+            self.get_data(Key::$key)
+        }
+
+        pub fn $update(&mut self, value: $value) {
+            self.update_data(Key::$key, value);
+        }
+    };
+}
 
 impl State {
     pub fn next_generation(&mut self) {
@@ -85,7 +108,7 @@ impl State {
         if self
             .current
             .kvs
-            .get(&PortPos)
+            .get(&Key::PortPos)
             .and_then(|kv| kv.get(&Id::new(port_id)))
             .is_some()
         {
@@ -93,45 +116,18 @@ impl State {
         }
     }
 
-    pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
-        self.update_kv(PortPos, port_id, pos);
-    }
+    kvs!(PortPos, port_pos, update_port_pos, PortId, Pos2);
+    kvs!(PlugPos, plug_pos, update_plug_pos, PlugId, Pos2);
+    kvs!(
+        CableState,
+        cable_state,
+        update_cable_state,
+        CableId,
+        CableState
+    );
 
-    pub fn port_pos(&self, port_id: &PortId) -> Option<Pos2> {
-        self.get_kv(PortPos, port_id)
-    }
-
-    pub fn update_plug_pos(&mut self, id: PlugId, pos: Pos2) {
-        self.update_kv(PlugPos, id, pos);
-    }
-
-    pub fn plug_pos(&self, id: &PlugId) -> Option<Pos2> {
-        self.get_kv(PlugPos, id)
-    }
-
-    pub fn update_cable_state(&mut self, id: CableId, pos: CableState) {
-        self.update_kv(CableState, id, pos);
-    }
-
-    pub fn cable_state(&self, id: &CableId) -> Option<CableState> {
-        self.get_kv(CableState, id)
-    }
-
-    pub fn update_hovered_port_id(&mut self, port_id: PortId) {
-        self.update_data(HoveredPort, port_id)
-    }
-
-    pub fn hovered_port_id(&self) -> Option<PortId> {
-        self.get_data(HoveredPort)
-    }
-
-    pub fn update_dragged_plug(&mut self, pos: Pos2) {
-        self.update_data(DraggedPlug, pos)
-    }
-
-    pub fn dragged_plug(&self) -> Option<Pos2> {
-        self.get_data(DraggedPlug)
-    }
+    kv!(HoveredPort, hovered_port_id, update_hovered_port_id, PortId);
+    kv!(DraggedPlug, dragged_plug, update_dragged_plug, Pos2);
 
     pub fn get_cloned(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
         Self::clone(
