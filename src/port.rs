@@ -31,8 +31,10 @@ impl Widget for Port {
         let size = 12.0;
         let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
 
-        // update port's position used in cable and plug rendering
-        state.update_port_pos(self.port_id, response.rect.center());
+        // advance generation if this port is rendered twice
+        state.advance_generation_if_twice(self.port_id);
+        // update port's position used for plug rendering
+        state.update_port_pos(self.port_id, response.rect.left_top());
 
         // distance between the port and the dragged plug
         let distance_sq = response

@@ -16,10 +16,8 @@ impl Widget for CableControl {
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
-                let response = ui.allocate_rect(
-                    Rect::from_center_size(self.pos, vec2(size, size)),
-                    Sense::click_and_drag(),
-                );
+                let (_rect, response) =
+                    ui.allocate_exact_size(vec2(size, size), Sense::click_and_drag());
                 let painter = Painter::new(ui.ctx().clone(), ui.layer_id(), Rect::EVERYTHING);
                 let visuals = widget_visuals(ui, &response);
                 painter.rect(response.rect, 3.0, visuals.bg_fill, visuals.fg_stroke);

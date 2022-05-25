@@ -81,8 +81,7 @@ impl State {
             .map(|data| data.downcast_ref::<V>().unwrap().clone())
     }
 
-    pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
-        // if the port_id will be updated twice, advances the generation
+    pub fn advance_generation_if_twice(&mut self, port_id: PortId) {
         if self
             .current
             .kvs
@@ -92,6 +91,9 @@ impl State {
         {
             self.next_generation();
         }
+    }
+
+    pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
         self.update_kv(PortPos, port_id, pos);
     }
 
@@ -157,21 +159,27 @@ mod tests {
     fn port_pos() {
         let mut state = State::default();
         // first gen
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 2.0));
-        state.update_port_pos(PortId::new(2), Pos2::new(2.0, 2.0));
-        state.update_port_pos(PortId::new(3), Pos2::new(3.0, 2.0));
+        state.advance_generation_if_twice(PortId::new(1));
+        state.update_port_pos(PortId::new(1), Pos2::ZERO);
+        state.advance_generation_if_twice(PortId::new(2));
+        state.update_port_pos(PortId::new(2), Pos2::ZERO);
+        state.advance_generation_if_twice(PortId::new(3));
+        state.update_port_pos(PortId::new(3), Pos2::ZERO);
         // second gen
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 3.0));
-        state.update_port_pos(PortId::new(2), Pos2::new(2.0, 3.0));
+        state.advance_generation_if_twice(PortId::new(1));
+        state.update_port_pos(PortId::new(1), Pos2::ZERO);
+        state.advance_generation_if_twice(PortId::new(2));
+        state.update_port_pos(PortId::new(2), Pos2::ZERO);
 
         // assert not advanced for third gen
-        assert_eq!(state.port_pos(&PortId::new(3)), Some(Pos2::new(3.0, 2.0)));
+        assert_eq!(state.port_pos(&PortId::new(3)), Some(Pos2::ZERO));
 
         // third gen
-        state.update_port_pos(PortId::new(1), Pos2::new(1.0, 4.0));
+        state.advance_generation_if_twice(PortId::new(1));
+        state.update_port_pos(PortId::new(1), Pos2::ZERO);
 
-        assert_eq!(state.port_pos(&PortId::new(1)), Some(Pos2::new(1.0, 4.0)));
-        assert_eq!(state.port_pos(&PortId::new(2)), Some(Pos2::new(2.0, 3.0)));
+        assert_eq!(state.port_pos(&PortId::new(1)), Some(Pos2::ZERO));
+        assert_eq!(state.port_pos(&PortId::new(2)), Some(Pos2::ZERO));
         assert_eq!(state.port_pos(&PortId::new(3)), None);
     }
 

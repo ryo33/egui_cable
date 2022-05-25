@@ -65,12 +65,11 @@ impl Widget for Plug {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let id = self.id.unwrap();
         let mut state = State::get_cloned(ui.data());
-        let size = 12.0;
-        let mut center_pos = if let Some(port_id) = &self.plug_to {
+        let mut pos = if let Some(port_id) = &self.plug_to {
             state
                 .port_pos(port_id)
                 // If port is not displayed, use saved plug pos
-                .or(state.plug_pos(&id))
+                .or_else(|| state.plug_pos(&id))
                 // FIXME: pos2(0.0, 0.0) is not good.
                 .unwrap_or(pos2(0.0, 0.0))
         } else {
@@ -78,22 +77,26 @@ impl Widget for Plug {
                 .plug_pos(&id)
                 .unwrap_or_else(|| self.default_pos.unwrap())
         };
+        let size = 12.0;
+        let mut center_pos = pos + vec2(size / 2.0, size / 2.0);
         egui::Area::new(id.clone())
             // must be top-left of the widget
-            .current_pos(center_pos - vec2(size / 2.0, size / 2.0))
+            .current_pos(pos)
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
-                    ui.allocate_rect(
-                        Rect::from_center_size(center_pos, vec2(size, size)),
-                        Sense::click(),
-                    )
+                    let (_rect, response) =
+                        ui.allocate_exact_size(vec2(size, size), Sense::focusable_noninteractive());
+                    response
                 } else {
                     let response = ui.allocate_rect(
-                        Rect::from_center_size(center_pos, vec2(size, size)),
+                        Rect::from_two_pos(pos, pos + vec2(size, size)),
                         Sense::drag(),
                     );
+
+                    // Don't forget to sync the center_pos
+                    pos += response.drag_delta();
                     center_pos += response.drag_delta();
 
                     // Update plug pos used for determining a port is hovered by plug
@@ -105,7 +108,7 @@ impl Widget for Plug {
                         // Connect event
                         if let Some(port_id) = state.hovered_port_id() {
                             state.ephemeral.event.insert(
-                                id.cable_id.clone(),
+                                id.cable_id,
                                 Event::Connected {
                                     plug_type: id.plug_type,
                                     port_id,
@@ -131,7 +134,7 @@ impl Widget for Plug {
 
                     response
                 };
-                state.update_plug_pos(id.clone(), center_pos);
+                state.update_plug_pos(id.clone(), pos);
                 state.store(ui);
                 response
             })
