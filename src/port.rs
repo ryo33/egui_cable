@@ -70,7 +70,7 @@ impl Widget for Port {
         });
 
         // finally update the state
-        state.store(ui);
+        state.store_to(ui.data());
 
         response
     }

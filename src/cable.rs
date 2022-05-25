@@ -187,7 +187,7 @@ impl Widget for Cable {
 
                 // finally update the states
                 state.update_cable_state(self.id, cable_state);
-                state.store(ui);
+                state.store_to(ui.data());
 
                 response
             })

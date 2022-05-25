@@ -2,7 +2,8 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
 
-use egui::{util::IdTypeMap, Id, Pos2, Ui};
+use egui::Vec2;
+use egui::{util::IdTypeMap, Id, Pos2};
 
 use crate::cable::CableState;
 use crate::plug::DraggedPlug;
@@ -34,6 +35,7 @@ enum Key {
     CableState,
     HoveredPort,
     DraggedPlug,
+    CableControlSize,
 }
 
 macro_rules! kvs {
@@ -125,6 +127,13 @@ impl State {
         CableId,
         CableState
     );
+    kvs!(
+        CableControlSize,
+        cable_control_size,
+        update_cable_control_size,
+        CableId,
+        Vec2
+    );
 
     kv!(HoveredPort, hovered_port_id, update_hovered_port_id, PortId);
     kv!(DraggedPlug, dragged_plug, update_dragged_plug, DraggedPlug);
@@ -142,8 +151,8 @@ impl State {
             .unwrap_or_default()
     }
 
-    pub fn store(self, ui: &mut Ui) {
-        ui.data().insert_persisted(Id::null(), Arc::new(self));
+    pub fn store_to(self, mut data: impl DerefMut<Target = IdTypeMap>) {
+        data.insert_persisted(Id::null(), Arc::new(self));
     }
 }
 

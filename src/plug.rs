@@ -145,7 +145,7 @@ impl Widget for Plug {
                 };
 
                 state.update_plug_pos(id.clone(), pos);
-                state.store(ui);
+                state.store_to(ui.data());
 
                 response
             })
