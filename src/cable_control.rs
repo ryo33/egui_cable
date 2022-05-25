@@ -12,6 +12,7 @@ impl Widget for CableControl {
         let size = 20.0;
         egui::Area::new((self.id, "cable_control"))
             // must be top-left of the widget
+            // FIXME: please make this size agnostic
             .current_pos(self.pos - vec2(size / 2.0, size / 2.0))
             // should be displayed on foreground
             .order(Order::Foreground)

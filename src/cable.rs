@@ -164,10 +164,20 @@ impl Widget for Cable {
                 };
                 bezier.stroke = cable_visual.fg_stroke;
 
-                // paint bezier curve
+                // paint bezier curve or circle if cable is looped.
                 let painter =
                     Painter::new(ui.ctx().clone(), egui::LayerId::debug(), Rect::EVERYTHING);
-                painter.add(bezier);
+                if in_pos == out_pos {
+                    let start = Rect::from_two_pos(in_pos, out_pos).center();
+                    let center = Rect::from_two_pos(start, cable_control_pos).center();
+                    painter.circle_stroke(
+                        center,
+                        cable_control_pos.distance(start) / 2.0,
+                        cable_visual.fg_stroke,
+                    )
+                } else {
+                    painter.add(bezier);
+                }
 
                 // this id is used in ResponseExt
                 state
