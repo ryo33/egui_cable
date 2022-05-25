@@ -1,4 +1,4 @@
-use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Widget};
+use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
 
 use crate::{cable::CableId, event::Event, state::State, utils::widget_visuals};
 
@@ -31,6 +31,12 @@ pub struct Plug {
     id: Option<PlugId>,
     // inserted by Cable widget
     default_pos: Option<Pos2>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct DraggedPlug {
+    pub pos: Pos2,
+    pub size: Vec2,
 }
 
 impl Plug {
@@ -101,7 +107,10 @@ impl Widget for Plug {
 
                     // Update plug pos used for determining a port is hovered by plug
                     if response.dragged() {
-                        state.update_dragged_plug(center_pos);
+                        state.update_dragged_plug(DraggedPlug {
+                            pos: center_pos,
+                            size: response.rect.size(),
+                        });
                     }
 
                     if response.drag_released() {
@@ -134,8 +143,10 @@ impl Widget for Plug {
 
                     response
                 };
+
                 state.update_plug_pos(id.clone(), pos);
                 state.store(ui);
+
                 response
             })
             .inner

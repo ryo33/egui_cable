@@ -5,6 +5,7 @@ use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
 use egui::{util::IdTypeMap, Id, Pos2, Ui};
 
 use crate::cable::CableState;
+use crate::plug::DraggedPlug;
 use crate::{cable::CableId, plug::PlugId, prelude::*};
 
 #[derive(Default, Clone, Debug)]
@@ -30,7 +31,6 @@ pub(crate) struct EphemeralState {
 enum Key {
     PortPos,
     PlugPos,
-    PlugSize,
     CableState,
     HoveredPort,
     DraggedPlug,
@@ -127,7 +127,7 @@ impl State {
     );
 
     kv!(HoveredPort, hovered_port_id, update_hovered_port_id, PortId);
-    kv!(DraggedPlug, dragged_plug, update_dragged_plug, Pos2);
+    kv!(DraggedPlug, dragged_plug, update_dragged_plug, DraggedPlug);
 
     pub fn get_cloned(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
         Self::clone(
