@@ -11,7 +11,7 @@ I create this for the visual programming editor of [Hihaheho/Desk](https://githu
 
 It's good for:
 
-- analog Synthesizerlike UI
+- analog synthesizer-like UI
 - node-based UI
 - anything you can imagine
 

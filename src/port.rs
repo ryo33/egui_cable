@@ -22,20 +22,29 @@ impl Port {
 
 impl Widget for Port {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        // This widget is not need to use egui::Area
+
         let mut state = State::get_cloned(ui.data());
         let size = 12.0;
         let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
-        let pos = response.rect.center();
-        state.update_port_pos(self.port_id, pos);
+
+        // update port's position used in cable and plug rendering
+        state.update_port_pos(self.port_id, response.rect.center());
+
+        // this should not be response.hovered() because plug may be active interacted
         let hovered = response.rect.contains(
             ui.input()
                 .pointer
                 .interact_pos()
                 .unwrap_or(pos2(-10.0, -10.0)),
         );
+
+        // update hovered port id used for cable connection
         if hovered {
             state.update_hovered_port_id(self.port_id);
         }
+
+        // paint the port
         let visuals = if hovered {
             ui.visuals().widgets.hovered
         } else {
@@ -47,7 +56,10 @@ impl Widget for Port {
             fill: visuals.bg_fill,
             stroke: visuals.fg_stroke,
         });
+
+        // finally update the state
         state.store(ui);
+
         response
     }
 }

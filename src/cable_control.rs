@@ -11,7 +11,9 @@ impl Widget for CableControl {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let size = 20.0;
         egui::Area::new((self.id, "cable_control"))
+            // must be top-left of the widget
             .current_pos(self.pos - vec2(size / 2.0, size / 2.0))
+            // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = ui.allocate_rect(

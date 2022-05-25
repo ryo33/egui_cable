@@ -2,7 +2,7 @@ use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Widget};
 
 use crate::{cable::CableId, event::Event, state::State, utils::widget_visuals};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PlugType {
     In,
     Out,
@@ -67,14 +67,21 @@ impl Widget for Plug {
         let mut state = State::get_cloned(ui.data());
         let size = 12.0;
         let mut pos = if let Some(port_id) = &self.plug_to {
-            state.port_pos(port_id).unwrap_or(pos2(0.0, 0.0))
+            state
+                .port_pos(port_id)
+                // If port is not displayed, use saved plug pos
+                .or(state.plug_pos(&id))
+                // FIXME: pos2(0.0, 0.0) is not good.
+                .unwrap_or(pos2(0.0, 0.0))
         } else {
             state
                 .plug_pos(&id)
                 .unwrap_or_else(|| self.default_pos.unwrap())
         };
         egui::Area::new(id.clone())
+            // must be top-left of the widget
             .current_pos(pos - vec2(size / 2.0, size / 2.0))
+            // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
@@ -88,11 +95,12 @@ impl Widget for Plug {
                         Sense::drag(),
                     );
                     pos += response.drag_delta();
-                    state.update_plug_pos(id.clone(), pos);
+
                     if response.drag_released() {
+                        // Connect event
                         if let Some(port_id) = state.hovered_port_id() {
                             state.ephemeral.event.insert(
-                                id.cable_id,
+                                id.cable_id.clone(),
                                 Event::Connected {
                                     plug_type: id.plug_type,
                                     port_id,
@@ -100,6 +108,8 @@ impl Widget for Plug {
                             );
                         }
                     }
+
+                    // paint circles
                     let visuals = widget_visuals(ui, &response);
                     ui.painter().add(epaint::CircleShape {
                         center: pos,
@@ -113,8 +123,10 @@ impl Widget for Plug {
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });
+
                     response
                 };
+                state.update_plug_pos(id.clone(), pos);
                 state.store(ui);
                 response
             })

@@ -64,6 +64,7 @@ impl State {
     }
 
     pub fn update_port_pos(&mut self, port_id: PortId, pos: Pos2) {
+        // if the port_id will be updated twice, advances the generation
         if self
             .current
             .kv

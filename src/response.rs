@@ -10,13 +10,13 @@ pub trait ResponseExt {
     /// Returns a port Id if out-plug is connected.
     fn out_connected_to(&self) -> Option<PortId>;
     /// Returns a port Id if in-plug or out-plug is connected.
-    fn connected_to(&self) -> Option<PortId>;
+    fn in_or_out_connected_to(&self) -> Option<PortId>;
     /// Returns true if in-plug is disconnected.
     fn in_disconnected(&self) -> bool;
     /// Returns true if out-plug is disconnected.
     fn out_disconnected(&self) -> bool;
     /// Returns true if in-plug or out-plug is disconnected.
-    fn disconnected(&self) -> bool;
+    fn in_or_out_disconnected(&self) -> bool;
 }
 
 impl ResponseExt for Response {
@@ -54,7 +54,7 @@ impl ResponseExt for Response {
         }
     }
 
-    fn connected_to(&self) -> Option<PortId> {
+    fn in_or_out_connected_to(&self) -> Option<PortId> {
         if let Some(Event::Connected {
             plug_type: _,
             port_id,
@@ -86,7 +86,7 @@ impl ResponseExt for Response {
         )
     }
 
-    fn disconnected(&self) -> bool {
+    fn in_or_out_disconnected(&self) -> bool {
         matches!(self.cable_event(), Some(Event::Disconnected { .. }))
     }
 }
