@@ -1,12 +1,11 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{pos2, vec2, Id, Order, Painter, Pos2, Rect, Sense, Widget};
+use egui::{pos2, vec2, Id, Order, Painter, Pos2, Rect, Sense, Vec2, Widget};
 use epaint::{Color32, QuadraticBezierShape};
 
 use crate::{
     cable_control::CableControl,
-    cable_state::CableState,
     plug::{PlugId, PlugType},
     prelude::*,
     state::State,
@@ -42,6 +41,14 @@ impl From<Id> for Plug {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct CableState {
+    pub relative_control_point_pos: Vec2,
+    pub dragged: bool,
+    pub drag_diff: Vec2,
+    pub active: bool,
+}
+
 impl Widget for Cable {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let available_rect = ui.available_rect_before_wrap();
@@ -73,6 +80,7 @@ impl Widget for Cable {
                     relative_control_point_pos: vec2(10.0, 25.0),
                     active: false,
                     dragged: false,
+                    drag_diff: vec2(0.0, 0.0),
                 });
                 let control_point_pos =
                     (midpoint + cable_state.relative_control_point_pos).to_pos2();
@@ -111,13 +119,20 @@ impl Widget for Cable {
 
                 if response.drag_started() {
                     cable_state.dragged = true;
+                    if let Some(origin) = ui.input().pointer.press_origin() {
+                        cable_state.drag_diff = cable_control_pos - origin;
+                    } else {
+                        cable_state.drag_diff = vec2(0.0, 0.0);
+                    }
                 }
                 if response.drag_released() {
                     cable_state.dragged = false;
                 }
                 if response.dragged() {
                     if let Some(pointer_pos) = pointer_pos {
-                        cable_state.relative_control_point_pos += pointer_pos - cable_control_pos;
+                        // use drag_diff for prevent cable from jumping on click.
+                        cable_state.relative_control_point_pos +=
+                            pointer_pos + cable_state.drag_diff - cable_control_pos;
                     }
                 }
                 if response.clicked() {

@@ -1,6 +1,5 @@
 pub mod cable;
 mod cable_control;
-mod cable_state;
 pub mod event;
 pub mod id;
 pub mod plug;

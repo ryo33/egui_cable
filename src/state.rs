@@ -4,7 +4,7 @@ use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
 
 use egui::{util::IdTypeMap, Id, Pos2, Ui};
 
-use crate::cable_state::CableState;
+use crate::cable::CableState;
 use crate::{cable::CableId, plug::PlugId, prelude::*};
 
 #[derive(Default, Clone, Debug)]
