@@ -9,7 +9,7 @@ use crate::{
     plug::{PlugId, PlugType},
     prelude::*,
     state::State,
-    utils::widget_visuals,
+    utils::{widget_visuals, FAR},
 };
 
 pub type CableId = Id;
@@ -101,7 +101,6 @@ impl Widget for Cable {
                     (0.0, Color32::BLACK),
                 );
 
-                const FAR: Pos2 = pos2(-10.0, -10.0);
                 let pointer_pos = ui.input().pointer.interact_pos();
                 let is_close = bezier_close(&bezier, pointer_pos.unwrap_or(FAR), 300.0);
 

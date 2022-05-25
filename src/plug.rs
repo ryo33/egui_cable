@@ -66,7 +66,7 @@ impl Widget for Plug {
         let id = self.id.unwrap();
         let mut state = State::get_cloned(ui.data());
         let size = 12.0;
-        let mut pos = if let Some(port_id) = &self.plug_to {
+        let mut center_pos = if let Some(port_id) = &self.plug_to {
             state
                 .port_pos(port_id)
                 // If port is not displayed, use saved plug pos
@@ -80,21 +80,26 @@ impl Widget for Plug {
         };
         egui::Area::new(id.clone())
             // must be top-left of the widget
-            .current_pos(pos - vec2(size / 2.0, size / 2.0))
+            .current_pos(center_pos - vec2(size / 2.0, size / 2.0))
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
                     ui.allocate_rect(
-                        Rect::from_center_size(pos, vec2(size, size)),
+                        Rect::from_center_size(center_pos, vec2(size, size)),
                         Sense::click(),
                     )
                 } else {
                     let response = ui.allocate_rect(
-                        Rect::from_center_size(pos, vec2(size, size)),
+                        Rect::from_center_size(center_pos, vec2(size, size)),
                         Sense::drag(),
                     );
-                    pos += response.drag_delta();
+                    center_pos += response.drag_delta();
+
+                    // Update plug pos used for determining a port is hovered by plug
+                    if response.dragged() {
+                        state.update_dragged_plug(center_pos);
+                    }
 
                     if response.drag_released() {
                         // Connect event
@@ -112,13 +117,13 @@ impl Widget for Plug {
                     // paint circles
                     let visuals = widget_visuals(ui, &response);
                     ui.painter().add(epaint::CircleShape {
-                        center: pos,
+                        center: center_pos,
                         radius: size / 2.0,
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });
                     ui.painter().add(epaint::CircleShape {
-                        center: pos,
+                        center: center_pos,
                         radius: size / 4.0,
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
@@ -126,7 +131,7 @@ impl Widget for Plug {
 
                     response
                 };
-                state.update_plug_pos(id.clone(), pos);
+                state.update_plug_pos(id.clone(), center_pos);
                 state.store(ui);
                 response
             })

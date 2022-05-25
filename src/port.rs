@@ -1,9 +1,12 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{pos2, vec2, Id, Sense, Widget};
+use egui::{vec2, Id, Sense, Widget};
 
-use crate::{state::State, utils::widget_visuals};
+use crate::{
+    state::State,
+    utils::{widget_visuals, FAR},
+};
 
 pub type PortId = Id;
 
@@ -31,13 +34,14 @@ impl Widget for Port {
         // update port's position used in cable and plug rendering
         state.update_port_pos(self.port_id, response.rect.center());
 
-        // this should not be response.hovered() because plug may be active interacted
-        let hovered = response.rect.contains(
-            ui.input()
-                .pointer
-                .interact_pos()
-                .unwrap_or(pos2(-10.0, -10.0)),
-        );
+        // distance between the port and the dragged plug
+        let distance_sq = response
+            .rect
+            .center()
+            .distance_sq(state.dragged_plug().unwrap_or(FAR));
+
+        // distance required because `response.hovered()` always returns false when plug is interacted
+        let hovered = response.hovered() || distance_sq < size.powi(2);
 
         // update hovered port id used for cable connection
         if hovered {
