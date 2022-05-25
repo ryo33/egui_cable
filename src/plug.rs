@@ -1,6 +1,11 @@
-use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
+use egui::{pos2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
 
-use crate::{cable::CableId, event::Event, state::State, utils::widget_visuals};
+use crate::{
+    cable::CableId,
+    event::Event,
+    state::State,
+    utils::{widget_visuals, SIZE},
+};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PlugType {
@@ -83,8 +88,6 @@ impl Widget for Plug {
                 .plug_pos(&id)
                 .unwrap_or_else(|| self.default_pos.unwrap())
         };
-        let size = 12.0;
-        let mut center_pos = pos + vec2(size / 2.0, size / 2.0);
         egui::Area::new(id.clone())
             // must be top-left of the widget
             .current_pos(pos)
@@ -93,17 +96,16 @@ impl Widget for Plug {
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() {
                     let (_rect, response) =
-                        ui.allocate_exact_size(vec2(size, size), Sense::focusable_noninteractive());
+                        ui.allocate_exact_size(SIZE, Sense::focusable_noninteractive());
                     response
                 } else {
-                    let response = ui.allocate_rect(
-                        Rect::from_two_pos(pos, pos + vec2(size, size)),
-                        Sense::drag(),
-                    );
+                    let response =
+                        ui.allocate_rect(Rect::from_two_pos(pos, pos + SIZE), Sense::drag());
+                    let size = response.rect.size();
 
-                    // Don't forget to sync the center_pos
                     pos += response.drag_delta();
-                    center_pos += response.drag_delta();
+
+                    let center_pos = pos + size / 2.0;
 
                     // Update plug pos used for determining a port is hovered by plug
                     if response.dragged() {
@@ -130,13 +132,13 @@ impl Widget for Plug {
                     let visuals = widget_visuals(ui, &response);
                     ui.painter().add(epaint::CircleShape {
                         center: center_pos,
-                        radius: size / 2.0,
+                        radius: size.x / 2.0,
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });
                     ui.painter().add(epaint::CircleShape {
                         center: center_pos,
-                        radius: size / 4.0,
+                        radius: size.x / 4.0,
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });

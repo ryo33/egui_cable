@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{vec2, Id, Sense, Vec2, Widget};
+use egui::{Id, Sense, Vec2, Widget};
 
 use crate::{
     plug::DraggedPlug,
     state::State,
-    utils::{widget_visuals, FAR},
+    utils::{widget_visuals, FAR, SIZE},
 };
 
 pub type PortId = Id;
@@ -29,8 +29,7 @@ impl Widget for Port {
         // This widget is not need to use egui::Area
 
         let mut state = State::get_cloned(ui.data());
-        let size = 12.0;
-        let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
+        let (rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
 
         // advance generation if this port is rendered twice
         state.advance_generation_if_twice(self.port_id);

@@ -1,4 +1,4 @@
-use egui::{pos2, style::WidgetVisuals, Pos2, Response, Ui};
+use egui::{pos2, style::WidgetVisuals, vec2, Pos2, Response, Ui, Vec2};
 
 pub fn widget_visuals(ui: &mut Ui, response: &Response) -> WidgetVisuals {
     if response.hovered() {
@@ -11,3 +11,5 @@ pub fn widget_visuals(ui: &mut Ui, response: &Response) -> WidgetVisuals {
 }
 
 pub const FAR: Pos2 = pos2(-10.0, -10.0);
+
+pub const SIZE: Vec2 = vec2(15.0, 15.0);

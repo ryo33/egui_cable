@@ -1,6 +1,10 @@
 use egui::{vec2, Order, Painter, Pos2, Rect, Sense, Widget};
 
-use crate::{cable::CableId, state::State, utils::widget_visuals};
+use crate::{
+    cable::CableId,
+    state::State,
+    utils::{widget_visuals, SIZE},
+};
 
 pub(crate) struct CableControl {
     pub id: CableId,
@@ -19,9 +23,7 @@ impl Widget for CableControl {
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
-                let size = 20.0;
-                let (rect, response) =
-                    ui.allocate_exact_size(vec2(size, size), Sense::click_and_drag());
+                let (rect, response) = ui.allocate_exact_size(SIZE, Sense::click_and_drag());
 
                 // update cable control size for calculate the next position of this area
                 state.update_cable_control_size(self.id, rect.size());
