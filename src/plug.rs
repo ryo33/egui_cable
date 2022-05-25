@@ -29,6 +29,8 @@ pub struct Plug {
     pos: Option<Pos2>,
     // inserted by Cable widget
     id: Option<PlugId>,
+    // inserted by Cable widget
+    default_pos: Option<Pos2>,
 }
 
 impl Plug {
@@ -44,7 +46,7 @@ impl Plug {
     }
 
     pub(crate) fn default_pos(mut self, pos: Pos2) -> Self {
-        self.pos = self.pos.or(Some(pos));
+        self.default_pos = Some(pos);
         self
     }
 
@@ -67,8 +69,9 @@ impl Widget for Plug {
         let mut pos = if let Some(port_id) = &self.plug_to {
             state.port_pos(port_id).unwrap_or(pos2(0.0, 0.0))
         } else {
-            // self.pos.unwrap is safe because Cable widget assigns a default value
-            state.plug_pos(&id).unwrap_or_else(|| self.pos.unwrap())
+            state
+                .plug_pos(&id)
+                .unwrap_or_else(|| self.default_pos.unwrap())
         };
         egui::Area::new(id.clone())
             .current_pos(pos - vec2(size / 2.0, size / 2.0))
