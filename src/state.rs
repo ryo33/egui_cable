@@ -6,7 +6,7 @@ use egui::Vec2;
 use egui::{util::IdTypeMap, Id, Pos2};
 
 use crate::cable::CableState;
-use crate::plug::DraggedPlug;
+use crate::plug::{DraggedPlug, PlugState};
 use crate::{cable::CableId, plug::PlugId, prelude::*};
 
 #[derive(Default, Clone, Debug)]
@@ -31,7 +31,7 @@ pub(crate) struct EphemeralState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Key {
     PortPos,
-    PlugPos,
+    PlugState,
     CableState,
     HoveredPort,
     DraggedPlug,
@@ -119,7 +119,7 @@ impl State {
     }
 
     kvs!(PortPos, port_pos, update_port_pos, PortId, Pos2);
-    kvs!(PlugPos, plug_pos, update_plug_pos, PlugId, Pos2);
+    kvs!(PlugState, plug_state, update_plug_state, PlugId, PlugState);
     kvs!(
         CableState,
         cable_state,

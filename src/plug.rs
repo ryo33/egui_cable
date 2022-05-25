@@ -1,4 +1,4 @@
-use egui::{pos2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
+use egui::{Id, Order, Pos2, Rect, Sense, Vec2, Widget};
 
 use crate::{
     cable::CableId,
@@ -36,6 +36,8 @@ pub struct Plug {
     id: Option<PlugId>,
     // inserted by Cable widget
     default_pos: Option<Pos2>,
+    // inserted by Cable widget
+    cable_active: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -70,45 +72,59 @@ impl Plug {
         self.id = Some(id);
         self
     }
+
+    pub(crate) fn active(mut self, active: bool) -> Self {
+        self.cable_active = active;
+        self
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PlugState {
+    pos: Pos2,
+    dragged: bool,
 }
 
 impl Widget for Plug {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let id = self.id.unwrap();
         let mut state = State::get_cloned(ui.data());
-        let mut pos = if let Some(port_id) = &self.plug_to {
-            state
-                .port_pos(port_id)
-                // If port is not displayed, use saved plug pos
-                .or_else(|| state.plug_pos(&id))
-                // FIXME: pos2(0.0, 0.0) is not good.
-                .unwrap_or(pos2(0.0, 0.0))
+        let mut plug_state = state.plug_state(&id).unwrap_or(PlugState {
+            pos: self.default_pos.unwrap(),
+            dragged: false,
+        });
+        plug_state.pos = if plug_state.dragged {
+            plug_state.pos
         } else {
-            state
-                .plug_pos(&id)
-                .unwrap_or_else(|| self.default_pos.unwrap())
+            self.plug_to
+                .and_then(|port_id| state.port_pos(&port_id))
+                // If port is not displayed, use saved plug pos
+                .unwrap_or(plug_state.pos)
         };
         egui::Area::new(id.clone())
             // must be top-left of the widget
-            .current_pos(pos)
+            .current_pos(plug_state.pos)
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
-                let response = if self.plug_to.is_some() {
+                let response = if self.plug_to.is_some() && !self.cable_active {
                     let (_rect, response) =
                         ui.allocate_exact_size(SIZE, Sense::focusable_noninteractive());
                     response
                 } else {
-                    let response =
-                        ui.allocate_rect(Rect::from_two_pos(pos, pos + SIZE), Sense::drag());
+                    let response = ui.allocate_rect(
+                        Rect::from_two_pos(plug_state.pos, plug_state.pos + SIZE),
+                        Sense::drag(),
+                    );
                     let size = response.rect.size();
 
-                    pos += response.drag_delta();
+                    plug_state.pos += response.drag_delta();
 
-                    let center_pos = pos + size / 2.0;
+                    let center_pos = plug_state.pos + size / 2.0;
 
                     // Update plug pos used for determining a port is hovered by plug
-                    if response.dragged() {
+                    plug_state.dragged = response.dragged();
+                    if plug_state.dragged {
                         state.update_dragged_plug(DraggedPlug {
                             pos: center_pos,
                             size: response.rect.size(),
@@ -116,15 +132,27 @@ impl Widget for Plug {
                     }
 
                     if response.drag_released() {
-                        // Connect event
-                        if let Some(port_id) = state.hovered_port_id() {
-                            state.ephemeral.event.insert(
-                                id.cable_id,
-                                Event::Connected {
-                                    plug_type: id.plug_type,
-                                    port_id,
-                                },
-                            );
+                        match (self.plug_to, state.hovered_port_id()) {
+                            // Connect event
+                            (_, Some(port_id)) => {
+                                state.ephemeral.event.insert(
+                                    id.cable_id,
+                                    Event::Connected {
+                                        plug_type: id.plug_type,
+                                        port_id,
+                                    },
+                                );
+                            }
+                            // Disconnect event
+                            (Some(_), None) => {
+                                state.ephemeral.event.insert(
+                                    id.cable_id,
+                                    Event::Disconnected {
+                                        plug_type: id.plug_type,
+                                    },
+                                );
+                            }
+                            _ => {}
                         }
                     }
 
@@ -146,7 +174,7 @@ impl Widget for Plug {
                     response
                 };
 
-                state.update_plug_pos(id.clone(), pos);
+                state.update_plug_state(id.clone(), plug_state);
                 state.store_to(ui.data());
 
                 response

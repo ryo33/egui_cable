@@ -59,6 +59,10 @@ impl Widget for Cable {
             // This is important to make other widgets intractive even when behind a cable
             .interactable(false)
             .show(ui.ctx(), |ui| {
+                let active = State::get(ui.data())
+                    .cable_state(&self.id)
+                    .map_or(false, |state| state.active);
+
                 // fixme? This could be more smart.
                 let default_in_pos = available_rect.left_top() + vec2(10.0, 0.0);
                 let default_out_pos = available_rect.left_top() + vec2(50.0, 0.0);
@@ -66,22 +70,18 @@ impl Widget for Cable {
                 let in_response = ui.add(
                     self.in_plug
                         .id(PlugId::new(self.id, PlugType::In))
-                        .default_pos(default_in_pos),
+                        .default_pos(default_in_pos)
+                        .active(active),
                 );
                 let out_response = ui.add(
                     self.out_plug
                         .id(PlugId::new(self.id, PlugType::Out))
-                        .default_pos(default_out_pos),
+                        .default_pos(default_out_pos)
+                        .active(active),
                 );
 
                 // This must be after ui.add(plug) because state might be modified.
                 let mut state = State::get_cloned(ui.data());
-
-                // Given positions
-                let in_pos = in_response.rect.center();
-                let out_pos = out_response.rect.center();
-                let midpoint = (in_pos.to_vec2() + out_pos.to_vec2()) / 2.0;
-
                 let mut cable_state = state.cable_state(&self.id).unwrap_or_else(|| CableState {
                     // Default is not zero to make sophisticated cable view.
                     bezier_control_point_offset: vec2(10.0, 25.0),
@@ -89,6 +89,11 @@ impl Widget for Cable {
                     dragged: false,
                     drag_offset: vec2(0.0, 0.0),
                 });
+
+                // Given positions
+                let in_pos = in_response.rect.center();
+                let out_pos = out_response.rect.center();
+                let midpoint = (in_pos.to_vec2() + out_pos.to_vec2()) / 2.0;
 
                 let bezier_control_pos =
                     (midpoint + cable_state.bezier_control_point_offset).to_pos2();

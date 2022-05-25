@@ -8,6 +8,5 @@ pub enum Event {
     },
     Disconnected {
         plug_type: PlugType,
-        port_id: PortId,
     },
 }
