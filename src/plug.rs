@@ -135,22 +135,17 @@ impl Widget for Plug {
                         match (self.plug_to, state.hovered_port_id()) {
                             // Connect event
                             (_, Some(port_id)) => {
-                                state.ephemeral.event.insert(
-                                    id.cable_id,
-                                    Event::Connected {
-                                        plug_type: id.plug_type,
-                                        port_id,
-                                    },
-                                );
+                                state
+                                    .ephemeral
+                                    .event_of_plug
+                                    .insert(response.id, Event::Connected { port_id });
                             }
                             // Disconnect event
                             (Some(_), None) => {
-                                state.ephemeral.event.insert(
-                                    id.cable_id,
-                                    Event::Disconnected {
-                                        plug_type: id.plug_type,
-                                    },
-                                );
+                                state
+                                    .ephemeral
+                                    .event_of_plug
+                                    .insert(response.id, Event::Disconnected);
                             }
                             _ => {}
                         }

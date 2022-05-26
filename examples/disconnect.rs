@@ -40,10 +40,10 @@ impl eframe::App for MyEguiApp {
                     Plug::new()
                 };
                 let response = ui.add(Cable::new(*key, in_plug, out_plug));
-                if response.in_disconnected() {
+                if response.in_plug().disconnected() {
                     *a = None;
                 }
-                if response.out_disconnected() {
+                if response.out_plug().disconnected() {
                     *b = None;
                 }
             }

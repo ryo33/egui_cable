@@ -1,92 +1,65 @@
+use std::ops::Deref;
+
 use egui::Response;
 
 use crate::{prelude::*, state::State};
 
 pub trait ResponseExt {
-    /// Returns an event if happens.
-    fn cable_event(&self) -> Option<Event>;
-    /// Returns a port Id if in-plug is connected.
-    fn in_connected_to(&self) -> Option<PortId>;
-    /// Returns a port Id if out-plug is connected.
-    fn out_connected_to(&self) -> Option<PortId>;
-    /// Returns a port Id if in-plug or out-plug is connected.
-    fn in_or_out_connected_to(&self) -> Option<PortId>;
-    /// Returns true if in-plug is disconnected.
-    fn in_disconnected(&self) -> bool;
-    /// Returns true if out-plug is disconnected.
-    fn out_disconnected(&self) -> bool;
-    /// Returns true if in-plug or out-plug is disconnected.
-    fn in_or_out_disconnected(&self) -> bool;
+    /// Returns a in-plug response
+    fn in_plug(&self) -> PlugResponse;
+    /// Returns a out-plug response
+    fn out_plug(&self) -> PlugResponse;
 }
 
+pub struct PlugResponse(pub(crate) Response);
+
 impl ResponseExt for Response {
-    fn cable_event(&self) -> Option<Event> {
-        let state = State::get(self.ctx.data());
-        state
+    fn in_plug(&self) -> PlugResponse {
+        let response = State::get(self.ctx.data())
             .ephemeral
-            .response_id_to_cable_id
+            .plug_responces_of_cable
             .get(&self.id)
-            .and_then(|cable_id| state.ephemeral.event.get(cable_id))
-            .cloned()
+            .unwrap()
+            .0
+            .clone();
+        PlugResponse(response)
     }
 
-    fn in_connected_to(&self) -> Option<PortId> {
-        if let Some(Event::Connected {
-            plug_type: PlugType::In,
-            port_id,
-        }) = self.cable_event()
-        {
-            Some(port_id)
+    fn out_plug(&self) -> PlugResponse {
+        let response = State::get(self.ctx.data())
+            .ephemeral
+            .plug_responces_of_cable
+            .get(&self.id)
+            .unwrap()
+            .1
+            .clone();
+        PlugResponse(response)
+    }
+}
+
+impl PlugResponse {
+    pub fn connected_to(&self) -> Option<PortId> {
+        let state = State::get(self.0.ctx.data());
+        if let Some(Event::Connected { port_id }) = state.ephemeral.event_of_plug.get(&self.0.id) {
+            Some(*port_id)
         } else {
             None
         }
     }
 
-    fn out_connected_to(&self) -> Option<PortId> {
-        if let Some(Event::Connected {
-            plug_type: PlugType::Out,
-            port_id,
-        }) = self.cable_event()
-        {
-            Some(port_id)
-        } else {
-            None
-        }
-    }
-
-    fn in_or_out_connected_to(&self) -> Option<PortId> {
-        if let Some(Event::Connected {
-            plug_type: _,
-            port_id,
-        }) = self.cable_event()
-        {
-            Some(port_id)
-        } else {
-            None
-        }
-    }
-
-    fn in_disconnected(&self) -> bool {
+    pub fn disconnected(&self) -> bool {
+        let state = State::get(self.0.ctx.data());
         matches!(
-            self.cable_event(),
-            Some(Event::Disconnected {
-                plug_type: PlugType::In,
-                ..
-            })
+            state.ephemeral.event_of_plug.get(&self.0.id),
+            Some(Event::Disconnected { .. })
         )
     }
+}
 
-    fn out_disconnected(&self) -> bool {
-        matches!(
-            self.cable_event(),
-            Some(Event::Disconnected {
-                plug_type: PlugType::Out,
-                ..
-            })
-        )
-    }
+impl Deref for PlugResponse {
+    type Target = Response;
 
-    fn in_or_out_disconnected(&self) -> bool {
-        matches!(self.cable_event(), Some(Event::Disconnected { .. }))
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

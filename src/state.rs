@@ -2,8 +2,8 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
 
-use egui::Vec2;
 use egui::{util::IdTypeMap, Id, Pos2};
+use egui::{Response, Vec2};
 
 use crate::cable::CableState;
 use crate::plug::{DraggedPlug, PlugState};
@@ -24,8 +24,8 @@ pub(crate) struct GenerationState {
 
 #[derive(Default, Clone, Debug)]
 pub(crate) struct EphemeralState {
-    pub response_id_to_cable_id: HashMap<Id, CableId>,
-    pub event: HashMap<CableId, Event>,
+    pub plug_responces_of_cable: HashMap<Id, (Response, Response)>,
+    pub event_of_plug: HashMap<Id, Event>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
