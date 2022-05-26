@@ -23,6 +23,7 @@ impl Widget for CableControl {
             // should be displayed on foreground
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
+                // cable control has click sense for make cable active, and drag sense for bezier deforming.
                 let (rect, response) = ui.allocate_exact_size(SIZE, Sense::click_and_drag());
 
                 // update cable control size for calculate the next position of this area

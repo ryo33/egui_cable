@@ -29,6 +29,8 @@ impl Widget for Port {
         // This widget is not need to use egui::Area
 
         let mut state = State::get_cloned(ui.data());
+
+        // minimum sense because interaction of port is not needed for now
         let (rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
 
         // advance generation if this port is rendered twice

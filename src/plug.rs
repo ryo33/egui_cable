@@ -101,22 +101,22 @@ impl Widget for Plug {
                 // If port is not displayed, use saved plug pos
                 .unwrap_or(plug_state.pos)
         };
+        let order = if self.cable_active {
+            // Make active plug be interactive
+            Order::Foreground
+        } else {
+            // Make port which is foreground be interactive
+            Order::Middle
+        };
         egui::Area::new(id.clone())
             // must be top-left of the widget
             .current_pos(plug_state.pos)
             // should be displayed on foreground
-            .order(Order::Foreground)
+            .order(order)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() && !self.cable_active {
-                    let (rect, response) =
-                        ui.allocate_exact_size(SIZE, Sense::focusable_noninteractive());
-                    let visuals = widget_visuals(ui, &response);
-                    ui.painter().add(epaint::CircleShape {
-                        center: rect.center(),
-                        radius: rect.size().x / 2.0 * 0.3,
-                        fill: visuals.fg_stroke.color,
-                        stroke: visuals.fg_stroke,
-                    });
+                    // minimum sense because it is not interactive
+                    let (_rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
                     response
                 } else {
                     let response = ui.allocate_rect(
@@ -166,15 +166,17 @@ impl Widget for Plug {
                         fill: visuals.bg_fill,
                         stroke: visuals.fg_stroke,
                     });
-                    ui.painter().add(epaint::CircleShape {
-                        center: center_pos,
-                        radius: size.x / 3.0,
-                        fill: visuals.fg_stroke.color,
-                        stroke: visuals.fg_stroke,
-                    });
 
                     response
                 };
+
+                let visuals = widget_visuals(ui, &response);
+                ui.painter().add(epaint::CircleShape {
+                    center: response.rect.center(),
+                    radius: response.rect.size().x / 2.0 * 0.3,
+                    fill: visuals.fg_stroke.color,
+                    stroke: visuals.fg_stroke,
+                });
 
                 state.update_plug_state(id.clone(), plug_state);
                 state.store_to(ui.data());
