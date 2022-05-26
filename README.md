@@ -19,7 +19,7 @@ It's good for:
 
 Click the images to see the source code.
 
-[![Simple example](https://user-images.githubusercontent.com/8780513/170408798-6284a221-fcf8-45d5-a622-9698c05f4b51.png)](https://github.com/ryo33/egui_cable/blob/main/examples/simple.rs)
+[![Simple example](https://user-images.githubusercontent.com/8780513/170413124-5400d9b4-8f10-4607-bc37-23acc8c6b842.png)](https://github.com/ryo33/egui_cable/blob/main/examples/simple.rs)
 
 [![Connect example](https://user-images.githubusercontent.com/8780513/170408794-ef879b04-9095-4c48-94d6-4773af9437e1.png)](https://github.com/ryo33/egui_cable/blob/main/examples/connect.rs)
 
