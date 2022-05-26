@@ -73,7 +73,7 @@ impl Plug {
         self
     }
 
-    pub(crate) fn active(mut self, active: bool) -> Self {
+    pub(crate) fn cable_active(mut self, active: bool) -> Self {
         self.cable_active = active;
         self
     }
@@ -108,8 +108,15 @@ impl Widget for Plug {
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 let response = if self.plug_to.is_some() && !self.cable_active {
-                    let (_rect, response) =
+                    let (rect, response) =
                         ui.allocate_exact_size(SIZE, Sense::focusable_noninteractive());
+                    let visuals = widget_visuals(ui, &response);
+                    ui.painter().add(epaint::CircleShape {
+                        center: rect.center(),
+                        radius: rect.size().x / 2.0 * 0.3,
+                        fill: visuals.fg_stroke.color,
+                        stroke: visuals.fg_stroke,
+                    });
                     response
                 } else {
                     let response = ui.allocate_rect(
@@ -161,8 +168,8 @@ impl Widget for Plug {
                     });
                     ui.painter().add(epaint::CircleShape {
                         center: center_pos,
-                        radius: size.x / 4.0,
-                        fill: visuals.bg_fill,
+                        radius: size.x / 3.0,
+                        fill: visuals.fg_stroke.color,
                         stroke: visuals.fg_stroke,
                     });
 

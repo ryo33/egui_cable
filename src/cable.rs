@@ -71,20 +71,20 @@ impl Widget for Cable {
                     self.in_plug
                         .id(PlugId::new(self.id, PlugType::In))
                         .default_pos(default_in_pos)
-                        .active(active),
+                        .cable_active(active),
                 );
                 let out_response = ui.add(
                     self.out_plug
                         .id(PlugId::new(self.id, PlugType::Out))
                         .default_pos(default_out_pos)
-                        .active(active),
+                        .cable_active(active),
                 );
 
                 // This must be after ui.add(plug) because state might be modified.
                 let mut state = State::get_cloned(ui.data());
                 let mut cable_state = state.cable_state(&self.id).unwrap_or_else(|| CableState {
                     // Default is not zero to make sophisticated cable view.
-                    bezier_control_point_offset: vec2(10.0, 25.0),
+                    bezier_control_point_offset: vec2(20.0, 25.0),
                     active: false,
                     dragged: false,
                     drag_offset: vec2(0.0, 0.0),
