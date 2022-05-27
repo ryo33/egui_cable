@@ -1,4 +1,4 @@
-use egui::{Id, Order, Pos2, Rect, Sense, Vec2, Widget};
+use egui::{vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
 
 use crate::{
     cable::CableId,
@@ -81,25 +81,29 @@ impl Plug {
 
 #[derive(Clone, Debug)]
 pub(crate) struct PlugState {
-    pos: Pos2,
+    pos_offset: Vec2,
     dragged: bool,
 }
 
 impl Widget for Plug {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        // safe unwrap
         let id = self.id.unwrap();
+        let default_pos = self.default_pos.unwrap();
+
         let mut state = State::get_cloned(ui.data());
         let mut plug_state = state.plug_state(&id).unwrap_or(PlugState {
-            pos: self.default_pos.unwrap(),
+            pos_offset: vec2(0.0, 0.0),
             dragged: false,
         });
-        plug_state.pos = if plug_state.dragged {
-            plug_state.pos
+        let get_pos = || default_pos + plug_state.pos_offset;
+        let mut pos = if plug_state.dragged {
+            get_pos()
         } else {
             self.plug_to
                 .and_then(|port_id| state.port_pos(&port_id))
                 // If port is not displayed, use saved plug pos
-                .unwrap_or(plug_state.pos)
+                .unwrap_or_else(get_pos)
         };
         let order = if self.cable_active {
             // Make active plug be interactive
@@ -110,7 +114,7 @@ impl Widget for Plug {
         };
         egui::Area::new(id.clone())
             // must be top-left of the widget
-            .current_pos(plug_state.pos)
+            .current_pos(pos)
             // should be displayed on foreground
             .order(order)
             .show(ui.ctx(), |ui| {
@@ -119,15 +123,14 @@ impl Widget for Plug {
                     let (_rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
                     response
                 } else {
-                    let response = ui.allocate_rect(
-                        Rect::from_two_pos(plug_state.pos, plug_state.pos + SIZE),
-                        Sense::drag(),
-                    );
+                    let response =
+                        ui.allocate_rect(Rect::from_two_pos(pos, pos + SIZE), Sense::drag());
                     let size = response.rect.size();
 
-                    plug_state.pos += response.drag_delta();
+                    // handle drag
+                    pos += response.drag_delta();
 
-                    let center_pos = plug_state.pos + size / 2.0;
+                    let center_pos = pos + size / 2.0;
 
                     // Update plug pos used for determining a port is hovered by plug
                     plug_state.dragged = response.dragged();
@@ -178,6 +181,8 @@ impl Widget for Plug {
                     stroke: visuals.fg_stroke,
                 });
 
+                // finally store states
+                plug_state.pos_offset = pos - default_pos;
                 state.update_plug_state(id.clone(), plug_state);
                 state.store_to(ui.data());
 
