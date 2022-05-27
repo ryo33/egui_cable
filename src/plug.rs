@@ -107,11 +107,12 @@ impl Widget for Plug {
         };
         let order = if self.cable_active {
             // Make active plug be interactive
-            Order::Foreground
+            Order::Debug
         } else {
             // Make port which is foreground be interactive
-            Order::Middle
+            Order::Foreground
         };
+        let mut center_pos = None;
         egui::Area::new(id.clone())
             // must be top-left of the widget
             .current_pos(pos)
@@ -130,13 +131,14 @@ impl Widget for Plug {
                     // handle drag
                     pos += response.drag_delta();
 
-                    let center_pos = pos + size / 2.0;
+                    // this should not be response.rect.center_size for painting it correctly
+                    center_pos = Some(pos + size / 2.0);
 
                     // Update plug pos used for determining a port is hovered by plug
                     plug_state.dragged = response.dragged();
                     if plug_state.dragged {
                         state.update_dragged_plug(DraggedPlug {
-                            pos: center_pos,
+                            pos: center_pos.unwrap(),
                             size: response.rect.size(),
                         });
                     }
@@ -161,21 +163,20 @@ impl Widget for Plug {
                         }
                     }
 
-                    // paint circles
-                    let visuals = widget_visuals(ui, &response);
-                    ui.painter().add(epaint::CircleShape {
-                        center: center_pos,
-                        radius: size.x / 2.0,
-                        fill: visuals.bg_fill,
-                        stroke: visuals.fg_stroke,
-                    });
-
                     response
                 };
 
+                let center_pos = center_pos.unwrap_or_else(|| response.rect.center());
+                let size = response.rect.size();
                 let visuals = widget_visuals(ui, &response);
                 ui.painter().add(epaint::CircleShape {
-                    center: response.rect.center(),
+                    center: center_pos,
+                    radius: size.x / 2.0,
+                    fill: visuals.bg_fill,
+                    stroke: visuals.fg_stroke,
+                });
+                ui.painter().add(epaint::CircleShape {
+                    center: center_pos,
                     radius: response.rect.size().x / 2.0 * 0.3,
                     fill: visuals.fg_stroke.color,
                     stroke: visuals.fg_stroke,

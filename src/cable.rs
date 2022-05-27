@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{pos2, vec2, Id, Order, Painter, Pos2, Rect, Sense, Vec2, Widget};
+use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
 use epaint::{Color32, QuadraticBezierShape};
 
 use crate::{
@@ -170,18 +170,16 @@ impl Widget for Cable {
                 bezier.stroke = cable_visual.fg_stroke;
 
                 // paint bezier curve or circle if cable is looped.
-                let painter =
-                    Painter::new(ui.ctx().clone(), egui::LayerId::debug(), Rect::EVERYTHING);
                 if in_pos == out_pos {
-                    let start = Rect::from_two_pos(in_pos, out_pos).center();
-                    let center = Rect::from_two_pos(start, cable_control_pos).center();
-                    painter.circle_stroke(
+                    // If loop, draw circle.
+                    let center = Rect::from_two_pos(in_pos, cable_control_pos).center();
+                    ui.painter().circle_stroke(
                         center,
-                        cable_control_pos.distance(start) / 2.0,
+                        cable_control_pos.distance(in_pos) / 2.0,
                         cable_visual.fg_stroke,
                     )
                 } else {
-                    painter.add(bezier);
+                    ui.painter().add(bezier);
                 }
 
                 // this id is used in ResponseExt
