@@ -1,4 +1,5 @@
 use egui::{vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
+use epaint::Stroke;
 
 use crate::{
     cable::CableId,
@@ -38,6 +39,8 @@ pub struct Plug {
     default_pos: Option<Pos2>,
     // inserted by Cable widget
     cable_active: bool,
+    // inserted by Cable widget
+    vec: Option<Vec2>,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +78,11 @@ impl Plug {
 
     pub(crate) fn cable_active(mut self, active: bool) -> Self {
         self.cable_active = active;
+        self
+    }
+
+    pub(crate) fn vec(mut self, vec: Option<Vec2>) -> Self {
+        self.vec = vec;
         self
     }
 }
@@ -169,6 +177,15 @@ impl Widget for Plug {
                 let center_pos = center_pos.unwrap_or_else(|| response.rect.center());
                 let size = response.rect.size();
                 let visuals = widget_visuals(ui, &response);
+                if let Some(vec) = self.vec {
+                    if response.dragged() {
+                        ui.painter().arrow(
+                            center_pos,
+                            vec * size.x / 2.0 * 1.5,
+                            Stroke::new(2.0, visuals.fg_stroke.color),
+                        );
+                    }
+                }
                 ui.painter().add(epaint::CircleShape {
                     center: center_pos,
                     radius: size.x / 2.0,

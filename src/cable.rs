@@ -47,6 +47,22 @@ pub(crate) struct CableState {
     pub dragged: bool,
     pub drag_offset: Vec2,
     pub active: bool,
+    pub in_vec: Option<Vec2>,
+    pub out_vec: Option<Vec2>,
+}
+
+impl Default for CableState {
+    fn default() -> Self {
+        Self {
+            // Default is not zero to make sophisticated cable view.
+            bezier_control_point_offset: vec2(20.0, 25.0),
+            active: false,
+            dragged: false,
+            drag_offset: vec2(0.0, 0.0),
+            in_vec: None,
+            out_vec: None,
+        }
+    }
 }
 
 impl Widget for Cable {
@@ -59,9 +75,9 @@ impl Widget for Cable {
             // This is important to make other widgets intractive even when behind a cable
             .interactable(false)
             .show(ui.ctx(), |ui| {
-                let active = State::get(ui.data())
+                let mut cable_state = State::get(ui.data())
                     .cable_state(&self.id)
-                    .map_or(false, |state| state.active);
+                    .unwrap_or_default();
 
                 // fixme? This could be more smart.
                 let default_in_pos = available_rect.left_top() + vec2(10.0, 0.0);
@@ -71,24 +87,16 @@ impl Widget for Cable {
                     self.in_plug
                         .id(PlugId::new(self.id, PlugType::In))
                         .default_pos(default_in_pos)
-                        .cable_active(active),
+                        .cable_active(cable_state.active)
+                        .vec(cable_state.in_vec),
                 );
                 let out_response = ui.add(
                     self.out_plug
                         .id(PlugId::new(self.id, PlugType::Out))
                         .default_pos(default_out_pos)
-                        .cable_active(active),
+                        .cable_active(cable_state.active)
+                        .vec(cable_state.out_vec),
                 );
-
-                // This must be after ui.add(plug) because state might be modified.
-                let mut state = State::get_cloned(ui.data());
-                let mut cable_state = state.cable_state(&self.id).unwrap_or_else(|| CableState {
-                    // Default is not zero to make sophisticated cable view.
-                    bezier_control_point_offset: vec2(20.0, 25.0),
-                    active: false,
-                    dragged: false,
-                    drag_offset: vec2(0.0, 0.0),
-                });
 
                 // Given positions
                 let in_pos = in_response.rect.center();
@@ -169,7 +177,17 @@ impl Widget for Cable {
                 };
                 bezier.stroke = cable_visual.fg_stroke;
 
-                // paint bezier curve or circle if cable is looped.
+                // update plug vec state for rendering the plug
+                if in_response.dragged() {
+                    cable_state.in_vec =
+                        Some((bezier.sample(0.0) - bezier.sample(0.05)).normalized());
+                }
+                if out_response.dragged() {
+                    cable_state.out_vec =
+                        Some((bezier.sample(1.0) - bezier.sample(0.95)).normalized());
+                }
+
+                // paint bezier curve or circle
                 if in_pos == out_pos {
                     // If loop, draw circle.
                     let center = Rect::from_two_pos(in_pos, cable_control_pos).center();
@@ -181,6 +199,9 @@ impl Widget for Cable {
                 } else {
                     ui.painter().add(bezier);
                 }
+
+                // This must be after ui.add(plug) because state might be modified.
+                let mut state = State::get_cloned(ui.data());
 
                 // this id is used in ResponseExt
                 state
