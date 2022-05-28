@@ -96,14 +96,14 @@ impl Widget for Cable {
                 let in_response = ui.add(
                     self.in_plug
                         .id(PlugId::new(self.id, PlugType::In))
-                        .default_pos(default_in_pos)
+                        .default_pos_no_overwrite(default_in_pos)
                         .cable_active(cable_state.active)
                         .vec(cable_state.in_vec),
                 );
                 let out_response = ui.add(
                     self.out_plug
                         .id(PlugId::new(self.id, PlugType::Out))
-                        .default_pos(default_out_pos)
+                        .default_pos_no_overwrite(default_out_pos)
                         .cable_active(cable_state.active)
                         .vec(cable_state.out_vec),
                 );

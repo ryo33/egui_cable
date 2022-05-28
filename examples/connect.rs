@@ -12,16 +12,16 @@ fn main() {
 
 #[derive(Default)]
 struct MyEguiApp {
-    connected: Vec<(PortId, PortId)>,
+    connected: Vec<(usize, usize)>,
 }
 
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("Connect me").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.add(Port::new(0));
+                ui.add(Port::new(0usize));
                 ui.add_space(40.0);
-                ui.add(Port::new(1));
+                ui.add(Port::new(1usize));
             });
 
             if self.connected.is_empty() {
@@ -30,7 +30,7 @@ impl eframe::App for MyEguiApp {
                     .out_plug()
                     .connected_to()
                 {
-                    self.connected.push((PortId::new(0), port_id));
+                    self.connected.push((0, *port_id.downcast_ref().unwrap()));
                 }
             }
             for (a, b) in self.connected.iter() {

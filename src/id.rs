@@ -63,12 +63,15 @@ impl Id {
             debug: debug::<T>,
         }
     }
+
+    pub fn downcast_ref<T: 'static>(&self) -> Option<&T> {
+        self.id.downcast_ref()
+    }
 }
 
 impl<T: 'static> AsRef<T> for Id {
     fn as_ref(&self) -> &T {
-        self.id
-            .downcast_ref()
+        self.downcast_ref()
             .expect("Cannot downcast port ID. Check your type.")
     }
 }

@@ -72,8 +72,16 @@ impl Plug {
         self
     }
 
-    pub(crate) fn default_pos(mut self, pos: Pos2) -> Self {
+    pub fn default_pos(mut self, pos: Pos2) -> Self {
         self.default_pos = Some(pos);
+        self
+    }
+
+    // used by cable
+    pub(crate) fn default_pos_no_overwrite(mut self, pos: Pos2) -> Self {
+        if self.default_pos.is_none() {
+            self.default_pos = Some(pos);
+        }
         self
     }
 
@@ -115,7 +123,8 @@ impl Widget for Plug {
             get_pos()
         } else {
             self.plug_to
-                .and_then(|port_id| state.port_pos(&port_id))
+                .as_ref()
+                .and_then(|port_id| state.port_pos(port_id))
                 // If port is not displayed, use saved plug pos
                 .unwrap_or_else(get_pos)
         };

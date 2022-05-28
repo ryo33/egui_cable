@@ -41,7 +41,7 @@ impl PlugResponse {
     pub fn connected_to(&self) -> Option<PortId> {
         let state = State::get(self.0.ctx.data());
         if let Some(Event::Connected { port_id }) = state.ephemeral.event_of_plug.get(&self.0.id) {
-            Some(*port_id)
+            Some(port_id.clone())
         } else {
             None
         }

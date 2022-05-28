@@ -1,10 +1,10 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{Id, Vec2, Widget};
+use egui::{Vec2, Widget};
 
 use crate::{
-    custom_widget::CustomWidget, default_port::DefaultPort, plug::DraggedPlug,
+    custom_widget::CustomWidget, default_port::DefaultPort, id::Id, plug::DraggedPlug,
     port_params::PortParams, state::State, utils::FAR,
 };
 
@@ -38,15 +38,15 @@ impl Widget for Port {
 
         // Render port with params
         PortParams {
-            hovered: state.hovered_port_id() == Some(self.port_id),
+            hovered: state.hovered_port_id() == Some(self.port_id.clone()),
         }
         .set(ui.data());
         let response = self.widget.unwrap_or_else(|| DefaultPort.into()).ui(ui);
 
         // advance generation if this port is rendered twice
-        state.advance_generation_if_twice(self.port_id);
+        state.advance_generation_if_twice(self.port_id.clone());
         // update port's position used for plug rendering
-        state.update_port_pos(self.port_id, response.rect.left_top());
+        state.update_port_pos(self.port_id.clone(), response.rect.left_top());
 
         let dragged_plug = state.dragged_plug().unwrap_or(DraggedPlug {
             pos: FAR,
