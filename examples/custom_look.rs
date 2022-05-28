@@ -11,10 +11,10 @@ impl egui::Widget for CustomPort {
         let _params = PortParams::get(ui.data());
 
         // Derive the default or implement your own.
-        // You should take a look into the default implementation.
+        // It's helpful to take a look at the default implementation.
         let response = ui.add(DefaultPort);
 
-        ui.label("This is custom port");
+        ui.label("This is a custom port");
 
         response
     }
@@ -29,10 +29,10 @@ impl egui::Widget for CustomPlug {
         let _params = PlugParams::get(ui.data());
 
         // Derive the default or implement your own.
-        // You should take a look into the default implementation.
+        // It's helpful to take a look at the default implementation.
         let response = ui.add(DefaultPlug);
 
-        ui.label("This is custom plug");
+        ui.label("This is a custom plug");
 
         response
     }
@@ -60,7 +60,7 @@ struct CustomControl;
 
 impl egui::Widget for CustomControl {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        ui.add(egui::Label::new("This is custom control").sense(egui::Sense::drag()))
+        ui.add(egui::Label::new("This is a custom control").sense(egui::Sense::drag()))
     }
 }
 
