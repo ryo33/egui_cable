@@ -188,7 +188,8 @@ impl Widget for Plug {
                 }
                 ui.painter().add(epaint::CircleShape {
                     center: center_pos,
-                    radius: response.rect.size().x / 2.0 * 0.7,
+                    radius: response.rect.size().x / 2.0
+                        * if self.cable_active { 0.7 } else { 0.2 },
                     fill: visuals.fg_stroke.color,
                     stroke: visuals.fg_stroke,
                 });
