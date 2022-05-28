@@ -8,7 +8,7 @@ fn main() {
         native_options,
         Box::new(|_| {
             Box::new(MyEguiApp {
-                connected: vec![(0, Some(PortId::new(0)), Some(PortId::new(1)))],
+                connected: vec![(0, Some(0), Some(1))],
             })
         }),
     );
@@ -16,7 +16,7 @@ fn main() {
 
 #[derive(Default)]
 struct MyEguiApp {
-    connected: Vec<(usize, Option<PortId>, Option<PortId>)>,
+    connected: Vec<(usize, Option<usize>, Option<usize>)>,
 }
 
 impl eframe::App for MyEguiApp {
@@ -30,14 +30,14 @@ impl eframe::App for MyEguiApp {
 
             for (key, a, b) in self.connected.iter_mut() {
                 let in_plug = if let Some(a) = a {
-                    Plug::plug_to(*a)
+                    Plug::to(*a)
                 } else {
-                    Plug::new()
+                    Plug::unplugged()
                 };
                 let out_plug = if let Some(b) = b {
-                    Plug::plug_to(*b)
+                    Plug::to(*b)
                 } else {
-                    Plug::new()
+                    Plug::unplugged()
                 };
                 let response = ui.add(Cable::new(*key, in_plug, out_plug));
                 if response.in_plug().disconnected() {

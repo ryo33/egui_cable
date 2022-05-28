@@ -13,7 +13,7 @@ use crate::{cable::CableId, plug::PlugId, prelude::*};
 pub(crate) struct State {
     previous: GenerationState,
     current: GenerationState,
-    pub ephemeral: EphemeralState,
+    pub(crate) ephemeral: EphemeralState,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -40,11 +40,11 @@ enum Key {
 
 macro_rules! kvs {
     ($key:ident, $get:ident, $update:ident, $id:ty, $value:ty) => {
-        pub fn $get(&self, id: &$id) -> Option<$value> {
+        pub(crate) fn $get(&self, id: &$id) -> Option<$value> {
             self.get_kv(Key::$key, id)
         }
 
-        pub fn $update(&mut self, id: $id, value: $value) {
+        pub(crate) fn $update(&mut self, id: $id, value: $value) {
             self.update_kv(Key::$key, id, value);
         }
     };
@@ -52,18 +52,18 @@ macro_rules! kvs {
 
 macro_rules! kv {
     ($key:ident, $get:ident, $update:ident, $value:ty) => {
-        pub fn $get(&self) -> Option<$value> {
+        pub(crate) fn $get(&self) -> Option<$value> {
             self.get_data(Key::$key)
         }
 
-        pub fn $update(&mut self, value: $value) {
+        pub(crate) fn $update(&mut self, value: $value) {
             self.update_data(Key::$key, value);
         }
     };
 }
 
 impl State {
-    pub fn next_generation(&mut self) {
+    pub(crate) fn next_generation(&mut self) {
         std::mem::swap(&mut self.previous, &mut self.current);
         self.current = Default::default();
         self.ephemeral = Default::default();
@@ -106,7 +106,7 @@ impl State {
             .map(|data| data.downcast_ref::<V>().unwrap().clone())
     }
 
-    pub fn advance_generation_if_twice(&mut self, port_id: PortId) {
+    pub(crate) fn advance_generation_if_twice(&mut self, port_id: PortId) {
         if self
             .current
             .kvs

@@ -24,20 +24,14 @@ pub struct Cable {
 impl Cable {
     pub fn new<T: Debug + Eq + Hash + Send + Sync + 'static>(
         id: T,
-        in_plug: impl Into<Plug>,
-        out_plug: impl Into<Plug>,
+        in_plug: Plug,
+        out_plug: Plug,
     ) -> Self {
         Cable {
             id: CableId::new(id),
-            in_plug: in_plug.into(),
-            out_plug: out_plug.into(),
+            in_plug,
+            out_plug,
         }
-    }
-}
-
-impl From<Id> for Plug {
-    fn from(port_id: Id) -> Self {
-        Plug::plug_to(port_id)
     }
 }
 

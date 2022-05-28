@@ -1,11 +1,11 @@
-use egui::{vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
-use epaint::Stroke;
+use std::fmt::Debug;
+use std::hash::Hash;
+
+use egui::{vec2, Order, Pos2, Vec2, Widget};
 
 use crate::{
-    cable::CableId,
-    event::Event,
-    state::State,
-    utils::{widget_visuals, SIZE},
+    cable::CableId, custom_widget::CustomWidget, default_plug::DefaultPlug, event::Event,
+    plug_params::PlugParams, prelude::PortId, state::State,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -31,7 +31,7 @@ impl PlugId {
 
 #[derive(Debug, Default)]
 pub struct Plug {
-    pub plug_to: Option<Id>,
+    pub plug_to: Option<PortId>,
     pos: Option<Pos2>,
     // inserted by Cable widget
     id: Option<PlugId>,
@@ -41,6 +41,7 @@ pub struct Plug {
     cable_active: bool,
     // inserted by Cable widget
     vec: Option<Vec2>,
+    widget: Option<CustomWidget>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,24 +51,29 @@ pub(crate) struct DraggedPlug {
 }
 
 impl Plug {
-    pub fn new() -> Self {
+    pub fn unplugged() -> Self {
         Plug::default()
     }
 
-    pub fn plug_to(port: Id) -> Self {
+    pub fn to<T: Hash + Eq + Debug + Send + Sync + 'static>(port: T) -> Self {
         Plug {
-            plug_to: Some(port),
+            plug_to: Some(PortId::new(port)),
             ..Default::default()
         }
     }
 
-    pub(crate) fn default_pos(mut self, pos: Pos2) -> Self {
-        self.default_pos = Some(pos);
+    pub fn pos(mut self, pos: Pos2) -> Self {
+        self.pos = Some(pos);
         self
     }
 
-    pub fn pos(mut self, pos: Pos2) -> Self {
-        self.pos = Some(pos);
+    pub fn widget(mut self, widget: impl Into<CustomWidget>) -> Self {
+        self.widget = Some(widget.into());
+        self
+    }
+
+    pub(crate) fn default_pos(mut self, pos: Pos2) -> Self {
+        self.default_pos = Some(pos);
         self
     }
 
@@ -120,79 +126,56 @@ impl Widget for Plug {
             // Make port which is foreground be interactive
             Order::Foreground
         };
-        let mut center_pos = None;
         egui::Area::new(id.clone())
             // must be top-left of the widget
             .current_pos(pos)
             // should be displayed on foreground
             .order(order)
             .show(ui.ctx(), |ui| {
-                let response = if self.plug_to.is_some() && !self.cable_active {
-                    // minimum sense because it is not interactive
-                    let (_rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
-                    response
-                } else {
-                    let response =
-                        ui.allocate_rect(Rect::from_two_pos(pos, pos + SIZE), Sense::drag());
-                    let size = response.rect.size();
+                // render plug with params
+                PlugParams {
+                    vector: self.vec,
+                    active: self.cable_active || self.plug_to.is_none(),
+                }
+                .set(ui.data());
+                let response = self.widget.unwrap_or_else(|| DefaultPlug.into()).ui(ui);
 
-                    // handle drag
-                    pos += response.drag_delta();
-
-                    // this should not be response.rect.center_size for painting it correctly
-                    center_pos = Some(pos + size / 2.0);
-
-                    // Update plug pos used for determining a port is hovered by plug
-                    plug_state.dragged = response.dragged();
-                    if plug_state.dragged {
-                        state.update_dragged_plug(DraggedPlug {
-                            pos: center_pos.unwrap(),
-                            size: response.rect.size(),
-                        });
-                    }
-
-                    if response.drag_released() {
-                        match (self.plug_to, state.hovered_port_id()) {
-                            // Connect event
-                            (_, Some(port_id)) => {
-                                state
-                                    .ephemeral
-                                    .event_of_plug
-                                    .insert(response.id, Event::Connected { port_id });
-                            }
-                            // Disconnect event
-                            (Some(_), None) => {
-                                state
-                                    .ephemeral
-                                    .event_of_plug
-                                    .insert(response.id, Event::Disconnected);
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    response
-                };
-
-                let center_pos = center_pos.unwrap_or_else(|| response.rect.center());
                 let size = response.rect.size();
-                let visuals = widget_visuals(ui, &response);
-                if let Some(vec) = self.vec {
-                    if response.dragged() {
-                        ui.painter().arrow(
-                            center_pos,
-                            vec * size.x / 2.0 * 1.5,
-                            Stroke::new(2.0, visuals.fg_stroke.color),
-                        );
+
+                // handle drag
+                pos += response.drag_delta();
+
+                // this should not be response.rect.center_size for painting it correctly
+                let center_pos = pos + size / 2.0;
+
+                // Update plug pos used for determining a port is hovered by plug
+                plug_state.dragged = response.dragged();
+                if plug_state.dragged {
+                    state.update_dragged_plug(DraggedPlug {
+                        pos: center_pos,
+                        size: response.rect.size(),
+                    });
+                }
+
+                if response.drag_released() {
+                    match (self.plug_to, state.hovered_port_id()) {
+                        // Connect event
+                        (_, Some(port_id)) => {
+                            state
+                                .ephemeral
+                                .event_of_plug
+                                .insert(response.id, Event::Connected { port_id });
+                        }
+                        // Disconnect event
+                        (Some(_), None) => {
+                            state
+                                .ephemeral
+                                .event_of_plug
+                                .insert(response.id, Event::Disconnected);
+                        }
+                        _ => {}
                     }
                 }
-                ui.painter().add(epaint::CircleShape {
-                    center: center_pos,
-                    radius: response.rect.size().x / 2.0
-                        * if self.cable_active { 0.7 } else { 0.2 },
-                    fill: visuals.fg_stroke.color,
-                    stroke: visuals.fg_stroke,
-                });
 
                 // finally store states
                 plug_state.pos_offset = pos - default_pos;

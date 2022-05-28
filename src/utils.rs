@@ -12,4 +12,5 @@ pub fn widget_visuals(ui: &mut Ui, response: &Response) -> WidgetVisuals {
 
 pub const FAR: Pos2 = pos2(-10.0, -10.0);
 
-pub const SIZE: Vec2 = vec2(15.0, 15.0);
+// should be even number because SIZE / 2.0 produces .5 and it may break rendering.
+pub const SIZE: Vec2 = vec2(16.0, 16.0);

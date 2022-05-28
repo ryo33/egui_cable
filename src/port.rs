@@ -1,12 +1,11 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{Id, Sense, Vec2, Widget};
+use egui::{Id, Vec2, Widget};
 
 use crate::{
-    plug::DraggedPlug,
-    state::State,
-    utils::{widget_visuals, FAR, SIZE},
+    custom_widget::CustomWidget, default_port::DefaultPort, plug::DraggedPlug,
+    port_params::PortParams, state::State, utils::FAR,
 };
 
 pub type PortId = Id;
@@ -14,13 +13,20 @@ pub type PortId = Id;
 #[derive(Debug)]
 pub struct Port {
     port_id: PortId,
+    widget: Option<CustomWidget>,
 }
 
 impl Port {
     pub fn new<T: Hash + Eq + Debug + Send + Sync + 'static>(port_id: T) -> Self {
         Port {
             port_id: PortId::new(port_id),
+            widget: None,
         }
+    }
+
+    pub fn widget(mut self, widget: impl Into<CustomWidget>) -> Self {
+        self.widget = Some(widget.into());
+        self
     }
 }
 
@@ -30,8 +36,12 @@ impl Widget for Port {
 
         let mut state = State::get_cloned(ui.data());
 
-        // minimum sense because interaction of port is not needed for now
-        let (rect, response) = ui.allocate_exact_size(SIZE, Sense::hover());
+        // Render port with params
+        PortParams {
+            hovered: state.hovered_port_id() == Some(self.port_id),
+        }
+        .set(ui.data());
+        let response = self.widget.unwrap_or_else(|| DefaultPort.into()).ui(ui);
 
         // advance generation if this port is rendered twice
         state.advance_generation_if_twice(self.port_id);
@@ -56,19 +66,6 @@ impl Widget for Port {
         if hovered {
             state.update_hovered_port_id(self.port_id);
         }
-
-        // paint the port
-        let visuals = if hovered {
-            ui.visuals().widgets.hovered
-        } else {
-            widget_visuals(ui, &response)
-        };
-        ui.painter().add(epaint::CircleShape {
-            center: rect.center(),
-            radius: rect.height() / 2.0,
-            fill: visuals.bg_fill,
-            stroke: visuals.fg_stroke,
-        });
 
         // finally update the state
         state.store_to(ui.data());
