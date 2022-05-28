@@ -10,7 +10,8 @@ impl egui::Widget for CustomPort {
         // You can use the params for rendering.
         let _params = PortParams::get(ui.data());
 
-        // You can use this if you like the default look. If not, you implement your own in here.
+        // Derive the default or implement your own.
+        // You should take a look into the default implementation.
         let response = ui.add(DefaultPort);
 
         ui.label("This is custom port");
@@ -27,12 +28,39 @@ impl egui::Widget for CustomPlug {
         // You can use the params for rendering.
         let _params = PlugParams::get(ui.data());
 
-        // You can use this if you like the default look. If not, you implement your own in here.
+        // Derive the default or implement your own.
+        // You should take a look into the default implementation.
         let response = ui.add(DefaultPlug);
 
         ui.label("This is custom plug");
 
         response
+    }
+}
+
+#[derive(Debug)]
+struct CustomCable;
+
+impl egui::Widget for CustomCable {
+    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        // You can use the params for rendering.
+        let params = CableParams::get(ui.data());
+
+        let mut bezier = params.bezier;
+        bezier.stroke = (5.0, epaint::Color32::GOLD).into();
+
+        ui.painter().add(bezier);
+
+        ui.add(params.cable_control)
+    }
+}
+
+#[derive(Debug)]
+struct CustomControl;
+
+impl egui::Widget for CustomControl {
+    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        ui.add(egui::Label::new("This is custom control").sense(egui::Sense::drag()))
     }
 }
 
@@ -51,7 +79,7 @@ struct MyEguiApp {}
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::Window::new("My window")
-            .default_pos(pos2(20.0, 100.0))
+            .default_pos(pos2(20.0, 190.0))
             .show(ctx, |ui| {
                 ui.add(Port::new(0).widget(CustomPort));
             });
@@ -63,12 +91,16 @@ impl eframe::App for MyEguiApp {
                 ui.add(Port::new(2));
             });
         egui::Window::new("My window 3")
-            .default_pos(pos2(200.0, 200.0))
+            .default_pos(pos2(200.0, 300.0))
             .show(ctx, |ui| {
                 ui.add(Port::new(3));
 
-                ui.add(Cable::new(0, Plug::to(0), Plug::to(1).widget(CustomPlug)));
-                ui.add(Cable::new(1, Plug::to(0), Plug::to(3)));
+                ui.add(
+                    Cable::new(0, Plug::to(0), Plug::to(1).widget(CustomPlug))
+                        .widget(CustomCable)
+                        .control_widget(CustomControl),
+                );
+                ui.add(Cable::new(1, Plug::to(0), Plug::to(3)).control_widget(CustomControl));
                 ui.add(Cable::new(2, Plug::to(2), Plug::unplugged()));
             });
     }

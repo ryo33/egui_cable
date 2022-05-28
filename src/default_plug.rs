@@ -1,4 +1,4 @@
-use egui::{Response, Sense, Widget};
+use egui::{Response, Sense, Ui, Widget};
 use epaint::Stroke;
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 pub struct DefaultPlug;
 
 impl Widget for DefaultPlug {
-    fn ui(self, ui: &mut egui::Ui) -> Response {
+    fn ui(self, ui: &mut Ui) -> Response {
         let params = PlugParams::get(ui.data());
         let vector = params.vector;
         let active = params.active;

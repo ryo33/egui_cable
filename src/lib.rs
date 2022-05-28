@@ -1,6 +1,8 @@
 pub mod cable;
-mod cable_control;
+pub mod cable_control;
+pub mod cable_params;
 mod custom_widget;
+pub mod default_cable;
 pub mod default_plug;
 pub mod default_port;
 pub mod event;
@@ -15,6 +17,8 @@ mod utils;
 
 pub mod prelude {
     pub use crate::cable::Cable;
+    pub use crate::cable_params::CableParams;
+    pub use crate::default_cable::DefaultControl;
     pub use crate::default_plug::DefaultPlug;
     pub use crate::default_port::DefaultPort;
     pub use crate::event::Event;

@@ -1,15 +1,17 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use egui::{pos2, vec2, Id, Order, Pos2, Rect, Sense, Vec2, Widget};
+use egui::{pos2, vec2, Id, Order, Pos2, Vec2, Widget};
 use epaint::{Color32, QuadraticBezierShape};
 
 use crate::{
     cable_control::CableControl,
+    custom_widget::CustomWidget,
+    default_cable::{DefaultCable, DefaultControl},
     plug::{PlugId, PlugType},
     prelude::*,
     state::State,
-    utils::{widget_visuals, FAR},
+    utils::FAR,
 };
 
 pub type CableId = Id;
@@ -19,6 +21,8 @@ pub struct Cable {
     pub id: CableId,
     in_plug: Plug,
     out_plug: Plug,
+    widget: Option<CustomWidget>,
+    control_widget: Option<CustomWidget>,
 }
 
 impl Cable {
@@ -31,7 +35,19 @@ impl Cable {
             id: CableId::new(id),
             in_plug,
             out_plug,
+            widget: None,
+            control_widget: None,
         }
+    }
+
+    pub fn widget(mut self, widget: impl Into<CustomWidget>) -> Self {
+        self.widget = Some(widget.into());
+        self
+    }
+
+    pub fn control_widget(mut self, widget: impl Into<CustomWidget>) -> Self {
+        self.control_widget = Some(widget.into());
+        self
     }
 }
 
@@ -100,12 +116,12 @@ impl Widget for Cable {
                 let bezier_control_pos =
                     (midpoint + cable_state.bezier_control_point_offset).to_pos2();
 
-                let mut bezier = QuadraticBezierShape::from_points_stroke(
+                let bezier = QuadraticBezierShape::from_points_stroke(
                     [in_pos, bezier_control_pos, out_pos],
                     false,
                     Color32::TRANSPARENT,
                     // a dummy value overwriten later
-                    (0.0, Color32::BLACK),
+                    (1.0, Color32::BLACK),
                 );
 
                 let pointer_pos = ui.input().pointer.interact_pos();
@@ -120,19 +136,19 @@ impl Widget for Cable {
 
                 let cable_control_pos = bezier.sample(0.5);
 
-                // We don't want to show cable control when cable is not hovered or a plug is interacted.
-                let response = if line_hovered && !plugs_interacted {
-                    ui.add(CableControl {
+                CableParams {
+                    active: cable_state.active,
+                    line_hovered,
+                    plugs_interacted,
+                    cable_control: CableControl {
                         id: self.id,
                         pos: cable_control_pos,
-                    })
-                } else {
-                    // allocate empty space
-                    ui.allocate_rect(
-                        Rect::from_two_pos(FAR, FAR),
-                        Sense::focusable_noninteractive(),
-                    )
-                };
+                        widget: self.control_widget.unwrap_or_else(|| DefaultControl.into()),
+                    },
+                    bezier,
+                }
+                .set(ui.data());
+                let response = self.widget.unwrap_or_else(|| DefaultCable.into()).ui(ui);
 
                 if response.drag_started() {
                     cable_state.dragged = true;
@@ -148,7 +164,7 @@ impl Widget for Cable {
                     cable_state.dragged = false;
                 }
                 if response.dragged() {
-                    if let Some(pointer_pos) = pointer_pos {
+                    if let Some(pointer_pos) = ui.input().pointer.interact_pos() {
                         // use drag_diff for prevent cable from jumping on click.
                         cable_state.bezier_control_point_offset +=
                             pointer_pos + cable_state.drag_offset - cable_control_pos;
@@ -163,14 +179,6 @@ impl Widget for Cable {
                     cable_state.active = false;
                 }
 
-                // visual of bezier curve
-                let cable_visual = if cable_state.active {
-                    ui.visuals().widgets.active
-                } else {
-                    widget_visuals(ui, &response)
-                };
-                bezier.stroke = cable_visual.fg_stroke;
-
                 // update plug vec state for rendering the plug
                 if in_response.dragged() {
                     cable_state.in_vec =
@@ -179,19 +187,6 @@ impl Widget for Cable {
                 if out_response.dragged() {
                     cable_state.out_vec =
                         Some((bezier.sample(1.0) - bezier.sample(0.95)).normalized());
-                }
-
-                // paint bezier curve or circle
-                if in_pos == out_pos {
-                    // If loop, draw circle.
-                    let center = Rect::from_two_pos(in_pos, cable_control_pos).center();
-                    ui.painter().circle_stroke(
-                        center,
-                        cable_control_pos.distance(in_pos) / 2.0,
-                        cable_visual.fg_stroke,
-                    )
-                } else {
-                    ui.painter().add(bezier);
                 }
 
                 // This must be after ui.add(plug) because state might be modified.

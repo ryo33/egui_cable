@@ -1,4 +1,4 @@
-use egui::{Response, Sense, Widget};
+use egui::{Response, Sense, Ui, Widget};
 
 use crate::{
     port_params::PortParams,
@@ -9,7 +9,7 @@ use crate::{
 pub struct DefaultPort;
 
 impl Widget for DefaultPort {
-    fn ui(self, ui: &mut egui::Ui) -> Response {
+    fn ui(self, ui: &mut Ui) -> Response {
         let params = PortParams::get(ui.data());
         let hovered = params.hovered;
 

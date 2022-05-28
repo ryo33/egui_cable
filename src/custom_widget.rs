@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use egui::Widget;
 
 pub struct CustomWidget {
-    widget: Box<dyn Any>,
+    widget: Box<dyn Any + Send + Sync + 'static>,
     debug: fn(&dyn Any) -> &dyn Debug,
     ui: fn(Box<dyn Any>, &mut egui::Ui) -> egui::Response,
 }
@@ -33,7 +33,7 @@ impl CustomWidget {
     }
 }
 
-impl<T: Widget + Debug + 'static> From<T> for CustomWidget {
+impl<T: Widget + Debug + Send + Sync + 'static> From<T> for CustomWidget {
     fn from(widget: T) -> Self {
         CustomWidget {
             widget: Box::new(widget),
