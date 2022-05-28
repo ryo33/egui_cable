@@ -35,7 +35,7 @@ impl eframe::App for MyEguiApp {
 
                 ui.add(Cable::new(0, PortId::new(0), PortId::new(1)));
                 ui.add(Cable::new(1, PortId::new(0), PortId::new(3)));
-                ui.add(Cable::new(2, PortId::new(2), PortId::new(3)));
+                ui.add(Cable::new(2, PortId::new(2), Plug::new()));
             });
     }
 

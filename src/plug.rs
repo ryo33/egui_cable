@@ -188,13 +188,7 @@ impl Widget for Plug {
                 }
                 ui.painter().add(epaint::CircleShape {
                     center: center_pos,
-                    radius: size.x / 2.0,
-                    fill: visuals.bg_fill,
-                    stroke: visuals.fg_stroke,
-                });
-                ui.painter().add(epaint::CircleShape {
-                    center: center_pos,
-                    radius: response.rect.size().x / 2.0 * 0.3,
+                    radius: response.rect.size().x / 2.0 * 0.7,
                     fill: visuals.fg_stroke.color,
                     stroke: visuals.fg_stroke,
                 });
