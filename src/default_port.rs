@@ -15,18 +15,21 @@ impl Widget for DefaultPort {
 
         let (rect, response) = ui.allocate_exact_size(SIZE, Sense::click());
 
-        // paint the port
-        let visuals = if hovered {
-            ui.visuals().widgets.hovered
-        } else {
-            widget_visuals(ui, &response)
-        };
-        ui.painter().add(epaint::CircleShape {
-            center: rect.center(),
-            radius: rect.height() / 2.0,
-            fill: visuals.bg_fill,
-            stroke: visuals.fg_stroke,
-        });
+        if ui.is_rect_visible(rect) {
+            // paint the port
+            let visuals = if hovered {
+                ui.visuals().widgets.hovered
+            } else {
+                widget_visuals(ui, &response)
+            };
+            ui.painter().add(epaint::CircleShape {
+                center: rect.center(),
+                radius: rect.height() / 2.0,
+                fill: visuals.bg_fill,
+                stroke: visuals.fg_stroke,
+            });
+        }
+
         response
     }
 }
