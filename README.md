@@ -15,6 +15,21 @@ It's good for:
 - node-based UI
 - anything you can imagine
 
+## Features
+
+- [x] connect ports by data
+- [x] dynamic connect and disconnect
+- [x] lock connection
+- [x] custom plug widget
+- [x] custom port widget
+- [x] custom cable widget
+- [x] multiple connections on a single port.
+- [x] on-connect event
+- [x] on-disconnect event
+- [x] on-hover event
+- [x] garbage collection
+- [ ] multi-touch support (help me)
+
 ## Examples
 
 Click the images to see the source code.
