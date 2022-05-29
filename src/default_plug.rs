@@ -14,10 +14,12 @@ impl Widget for DefaultPlug {
         let params = PlugParams::get(ui.data());
         let vector = params.vector;
         let active = params.active;
+        let plugged = params.plugged;
+        let locked = params.locked;
 
         let (rect, response) = ui.allocate_exact_size(
             SIZE,
-            if active {
+            if (active || !plugged) && !locked {
                 Sense::drag()
             } else {
                 // minimum sense to make not interactive
@@ -31,7 +33,11 @@ impl Widget for DefaultPlug {
         // this should not be response.rect.center() for painting it correctly while dragging
         let center_pos = pos + size / 2.0;
 
-        let visuals = widget_visuals(ui, &response);
+        let visuals = if locked {
+            ui.visuals().widgets.noninteractive
+        } else {
+            widget_visuals(ui, &response)
+        };
         if response.dragged() {
             if let Some(vector) = vector {
                 ui.painter().arrow(

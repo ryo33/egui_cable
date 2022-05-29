@@ -6,6 +6,8 @@ use egui::{util::IdTypeMap, Id, Vec2};
 pub struct PlugParams {
     pub vector: Option<Vec2>,
     pub active: bool,
+    pub plugged: bool,
+    pub locked: bool,
 }
 
 impl PlugParams {

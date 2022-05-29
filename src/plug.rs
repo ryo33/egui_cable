@@ -33,6 +33,8 @@ impl PlugId {
 pub struct Plug {
     pub plug_to: Option<PortId>,
     pos: Option<Pos2>,
+    widget: Option<CustomWidget>,
+    locked: bool,
     // inserted by Cable widget
     id: Option<PlugId>,
     // inserted by Cable widget
@@ -41,7 +43,6 @@ pub struct Plug {
     cable_active: bool,
     // inserted by Cable widget
     vec: Option<Vec2>,
-    widget: Option<CustomWidget>,
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +78,11 @@ impl Plug {
         self
     }
 
+    pub fn lock(mut self) -> Self {
+        self.locked = true;
+        self
+    }
+
     // used by cable
     pub(crate) fn default_pos_no_overwrite(mut self, pos: Pos2) -> Self {
         if self.default_pos.is_none() {
@@ -85,16 +91,19 @@ impl Plug {
         self
     }
 
+    // used by cable
     pub(crate) fn id(mut self, id: PlugId) -> Self {
         self.id = Some(id);
         self
     }
 
+    // used by cable
     pub(crate) fn cable_active(mut self, active: bool) -> Self {
         self.cable_active = active;
         self
     }
 
+    // used by cable
     pub(crate) fn vec(mut self, vec: Option<Vec2>) -> Self {
         self.vec = vec;
         self
@@ -150,7 +159,9 @@ impl Widget for Plug {
                 // render plug with params
                 PlugParams {
                     vector: self.vec,
-                    active: self.cable_active || self.plug_to.is_none(),
+                    active: self.cable_active,
+                    plugged: self.plug_to.is_some(),
+                    locked: self.locked,
                 }
                 .set(ui.data());
                 let response = self.widget.unwrap_or_else(|| DefaultPlug.into()).ui(ui);
