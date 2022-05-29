@@ -118,7 +118,13 @@ impl Widget for Plug {
             pos_offset: vec2(0.0, 0.0),
             dragged: false,
         });
-        let get_pos = || default_pos + plug_state.pos_offset;
+        let get_pos = || {
+            if let Some(pos) = self.pos {
+                pos
+            } else {
+                default_pos + plug_state.pos_offset
+            }
+        };
         let mut pos = if plug_state.dragged {
             get_pos()
         } else {
