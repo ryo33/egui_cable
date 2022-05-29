@@ -77,7 +77,8 @@ impl Default for CableState {
 
 impl Widget for Cable {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let available_rect = ui.available_rect_before_wrap();
+        // This must be out of area to get the next widget pos.
+        let next_widget_position = ui.next_widget_position();
         egui::Area::new(self.id)
             .order(Order::Foreground)
             // This should be the top-left of the window
@@ -90,8 +91,8 @@ impl Widget for Cable {
                     .unwrap_or_default();
 
                 // fixme? This could be more smart.
-                let default_in_pos = available_rect.left_top() + vec2(10.0, 0.0);
-                let default_out_pos = available_rect.left_top() + vec2(50.0, 0.0);
+                let default_in_pos = next_widget_position + vec2(10.0, 0.0);
+                let default_out_pos = next_widget_position + vec2(50.0, 0.0);
 
                 let in_response = ui.add(
                     self.in_plug
