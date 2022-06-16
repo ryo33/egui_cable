@@ -4,4 +4,5 @@ use crate::prelude::*;
 pub enum Event {
     Connected { port_id: PortId },
     Disconnected,
+    Hovered { port_id: PortId },
 }

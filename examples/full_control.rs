@@ -94,6 +94,13 @@ impl eframe::App for MyEguiApp {
                 if in_plug.disconnected() {
                     cable.in_plug.to = None;
                 }
+                if let Some(on) = in_plug.hovered_on() {
+                    println!(
+                        "in-plug of {} hovered on {}",
+                        cable.name,
+                        on.downcast_ref::<String>().unwrap()
+                    );
+                }
                 cable.in_plug.pos = in_plug.next_position();
 
                 let out_plug = response.out_plug();
@@ -102,6 +109,13 @@ impl eframe::App for MyEguiApp {
                 }
                 if out_plug.disconnected() {
                     cable.out_plug.to = None;
+                }
+                if let Some(on) = out_plug.hovered_on() {
+                    println!(
+                        "out-plug of {} hovered on {}",
+                        cable.name,
+                        on.downcast_ref::<String>().unwrap()
+                    );
                 }
                 cable.out_plug.pos = out_plug.next_position();
             }

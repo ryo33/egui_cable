@@ -199,6 +199,14 @@ impl Widget for Plug {
                         _ => {}
                     }
                 }
+                if let Some(port_id) = state.hovered_port_id() {
+                    if response.dragged() {
+                        state
+                            .ephemeral
+                            .event_of_plug
+                            .insert(response.id, Event::Hovered { port_id });
+                    }
+                }
 
                 // finally store states
                 plug_state.pos_offset = pos - default_pos;
