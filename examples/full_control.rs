@@ -55,7 +55,7 @@ impl eframe::App for MyEguiApp {
                 ui.horizontal(|ui| {
                     if ui.add(Port::new(port.name.clone())).clicked() {
                         self.cables.push(MyCable {
-                            name: format!("{} -> {}", self.name, port.name),
+                            name: format!("{}", self.cables.len()),
                             in_plug: MyPlug {
                                 pos: port.pos,
                                 to: Some(port.name.clone()),
@@ -86,25 +86,24 @@ impl eframe::App for MyEguiApp {
                         .unwrap_or_else(Plug::unplugged)
                         .pos(cable.out_plug.pos),
                 ));
-                let in_plug = response.in_plug();
 
+                let in_plug = response.in_plug();
                 if let Some(to) = in_plug.connected_to() {
                     cable.in_plug.to = Some(to.downcast_ref::<String>().unwrap().clone());
                 }
                 if in_plug.disconnected() {
                     cable.in_plug.to = None;
                 }
-                cable.in_plug.pos += in_plug.drag_delta();
+                cable.in_plug.pos = in_plug.next_position();
 
                 let out_plug = response.out_plug();
-
                 if let Some(to) = out_plug.connected_to() {
                     cable.out_plug.to = Some(to.downcast_ref::<String>().unwrap().clone());
                 }
                 if out_plug.disconnected() {
                     cable.out_plug.to = None;
                 }
-                cable.out_plug.pos += out_plug.drag_delta();
+                cable.out_plug.pos = out_plug.next_position();
             }
         });
     }

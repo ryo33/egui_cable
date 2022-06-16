@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use egui::Response;
+use egui::{Pos2, Response};
 
 use crate::{prelude::*, state::State};
 
@@ -17,7 +17,7 @@ impl ResponseExt for Response {
     fn in_plug(&self) -> PlugResponse {
         let response = State::get(self.ctx.data())
             .ephemeral
-            .plug_responces_of_cable
+            .plug_responses_of_cable
             .get(&self.id)
             .unwrap()
             .0
@@ -28,7 +28,7 @@ impl ResponseExt for Response {
     fn out_plug(&self) -> PlugResponse {
         let response = State::get(self.ctx.data())
             .ephemeral
-            .plug_responces_of_cable
+            .plug_responses_of_cable
             .get(&self.id)
             .unwrap()
             .1
@@ -53,6 +53,10 @@ impl PlugResponse {
             state.ephemeral.event_of_plug.get(&self.0.id),
             Some(Event::Disconnected { .. })
         )
+    }
+
+    pub fn next_position(&self) -> Pos2 {
+        self.0.rect.left_top() + self.0.drag_delta()
     }
 }
 

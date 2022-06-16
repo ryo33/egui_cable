@@ -196,7 +196,7 @@ impl Widget for Cable {
                 // this id is used in ResponseExt
                 state
                     .ephemeral
-                    .plug_responces_of_cable
+                    .plug_responses_of_cable
                     .insert(response.id, (in_response, out_response));
 
                 // finally update the states
