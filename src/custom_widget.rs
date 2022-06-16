@@ -26,6 +26,7 @@ impl Debug for CustomWidget {
     }
 }
 
+// Cannot implement Widget for CustomWidget because it causes a conflict implementation with the following impl From<T>.
 impl CustomWidget {
     pub(crate) fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let ui_fn = self.ui;

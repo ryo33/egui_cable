@@ -143,18 +143,11 @@ impl Widget for Plug {
                 // If port is not displayed, use saved plug pos
                 .unwrap_or_else(get_pos)
         };
-        let order = if self.cable_active {
-            // Make active plug be interactive
-            Order::Debug
-        } else {
-            // Make port which is foreground be interactive
-            Order::Foreground
-        };
         egui::Area::new(id.clone())
             // must be top-left of the widget
             .current_pos(pos)
             // should be displayed on foreground
-            .order(order)
+            .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
                 // render plug with params
                 PlugParams {
@@ -164,6 +157,10 @@ impl Widget for Plug {
                     locked: self.locked,
                 }
                 .set(ui.data());
+                // Move the layer top for active plug
+                if self.cable_active {
+                    ui.ctx().move_to_top(ui.layer_id());
+                }
                 let response = self.widget.unwrap_or_else(|| DefaultPlug.into()).ui(ui);
 
                 let size = response.rect.size();

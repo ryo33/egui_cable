@@ -21,9 +21,11 @@ impl Widget for CableControl {
                 // Don't render the widget if the size is not available
                 FAR
             })
-            // should be displayed on cable bezier
-            .order(Order::Debug)
+            .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
+                // should be displayed on cable bezier
+                ui.ctx().move_to_top(ui.layer_id());
+
                 // cable control has click sense for make cable active, and drag sense for bezier deforming.
                 let response = self.widget.ui(ui);
 
