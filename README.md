@@ -15,6 +15,8 @@ It's good for:
 - node-based UI
 - anything you can imagine
 
+The code is good for studying how to write egui widgets.
+
 ## Features
 
 - [x] connect ports by data
