@@ -1,6 +1,6 @@
 [package]
 name = "egui_cable"
-version = "0.3.0"
+version = "0.3.1"
 license = "MIT OR Apache-2.0"
 description = "A generic and extensible data-oriented widget for connecting ports by cables"
 homepage = "https://github.com/ryo33/egui_cable"
@@ -11,8 +11,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.18"
-epaint = "0.18"
+egui = "0"
+epaint = "0"
 
 [dev-dependencies]
-eframe = "0.18"
+eframe = "0"
