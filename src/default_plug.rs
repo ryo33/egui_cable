@@ -11,7 +11,7 @@ pub struct DefaultPlug;
 
 impl Widget for DefaultPlug {
     fn ui(self, ui: &mut Ui) -> Response {
-        let params = PlugParams::get(ui.data());
+        let params = PlugParams::get(ui);
         let vector = params.vector;
         let active = params.active;
         let plugged = params.plugged;

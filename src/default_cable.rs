@@ -2,7 +2,7 @@ use egui::{Rect, Response, Sense, Ui, Widget};
 
 use crate::{
     prelude::CableParams,
-    utils::{widget_visuals, FAR, SIZE},
+    utils::{widget_visuals, SIZE},
 };
 
 // This is not public because CableParams::get cannot be used twice.
@@ -11,7 +11,7 @@ pub(crate) struct DefaultCable;
 
 impl Widget for DefaultCable {
     fn ui(self, ui: &mut Ui) -> Response {
-        let params = CableParams::get(ui.data());
+        let params = CableParams::get(ui);
         let active = params.active;
         let line_hovered = params.line_hovered;
         let plugs_interacted = params.plugs_interacted;
@@ -23,11 +23,7 @@ impl Widget for DefaultCable {
         let response = if line_hovered && !plugs_interacted {
             ui.add(cable_control)
         } else {
-            // allocate empty space
-            ui.allocate_rect(
-                Rect::from_two_pos(FAR, FAR),
-                Sense::focusable_noninteractive(),
-            )
+            ui.interact(Rect::NOTHING, egui::Id::new("dummy-cable-control"), Sense::focusable_noninteractive())
         };
 
         let in_pos = bezier.points[0];

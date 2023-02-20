@@ -10,7 +10,7 @@ pub struct DefaultPort;
 
 impl Widget for DefaultPort {
     fn ui(self, ui: &mut Ui) -> Response {
-        let params = PortParams::get(ui.data());
+        let params = PortParams::get(ui);
         let hovered = params.hovered;
 
         let (rect, response) = ui.allocate_exact_size(SIZE, Sense::click());

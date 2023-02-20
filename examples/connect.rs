@@ -2,12 +2,14 @@ use eframe::egui;
 use egui_cable::prelude::*;
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
+    let mut native_options = eframe::NativeOptions::default();
+    native_options.default_theme = eframe::Theme::Light;
     eframe::run_native(
         "My egui App",
         native_options,
         Box::new(|_| Box::new(MyEguiApp::default())),
-    );
+    )
+    .expect("Failed to start native platform");
 }
 
 #[derive(Default)]
@@ -39,7 +41,7 @@ impl eframe::App for MyEguiApp {
         });
     }
 
-    fn clear_color(&self, _visuals: &egui::Visuals) -> egui::Rgba {
-        egui::Rgba::WHITE
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        egui::Rgba::WHITE.to_array()
     }
 }

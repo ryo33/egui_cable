@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::{any::Any, collections::HashMap, ops::DerefMut, sync::Arc};
+use std::{any::Any, collections::HashMap, sync::Arc};
 
-use egui::{util::IdTypeMap, Id, Pos2};
+use egui::{Id, Pos2};
 use egui::{Response, Vec2};
 
 use crate::cable::CableState;
@@ -138,21 +138,34 @@ impl State {
     kv!(HoveredPort, hovered_port_id, update_hovered_port_id, PortId);
     kv!(DraggedPlug, dragged_plug, update_dragged_plug, DraggedPlug);
 
-    pub fn get_cloned(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
-        Self::clone(
-            &data
-                .get_persisted::<Arc<State>>(Id::null())
-                .unwrap_or_default(),
-        )
+    pub fn get_cloned(ui: &mut egui::Ui) -> Self {
+        ui.data_mut(|data| {
+            Self::clone(
+                &data
+                    .get_persisted::<Arc<State>>(Id::null())
+                    .unwrap_or_default(),
+            )
+        })
     }
 
-    pub fn get(mut data: impl DerefMut<Target = IdTypeMap>) -> Arc<Self> {
-        data.get_persisted::<Arc<State>>(Id::null())
-            .unwrap_or_default()
+    pub fn get(ui: &mut egui::Ui) -> Arc<Self> {
+        ui.data_mut(|data| {
+            data.get_persisted::<Arc<State>>(Id::null())
+                .unwrap_or_default()
+        })
     }
 
-    pub fn store_to(self, mut data: impl DerefMut<Target = IdTypeMap>) {
-        data.insert_persisted(Id::null(), Arc::new(self));
+    pub fn get_with_ctx(ctx: &mut egui::Context) -> Arc<Self> {
+        ctx.data_mut(|data| {
+            data.get_persisted::<Arc<State>>(Id::null())
+                .unwrap_or_default()
+        })
+    }
+
+    pub fn store_to(self, ui: &mut egui::Ui) {
+        ui.data_mut(|data| {
+            data.insert_persisted(Id::null(), Arc::new(self));
+        });
     }
 }
 

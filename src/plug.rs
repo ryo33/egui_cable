@@ -122,7 +122,7 @@ impl Widget for Plug {
         let id = self.id.unwrap();
         let default_pos = self.default_pos.unwrap();
 
-        let mut state = State::get_cloned(ui.data());
+        let mut state = State::get_cloned(ui);
         let mut plug_state = state.plug_state(&id).unwrap_or(PlugState {
             pos_offset: vec2(0.0, 0.0),
             dragged: false,
@@ -143,7 +143,7 @@ impl Widget for Plug {
                 // If port is not displayed, use saved plug pos
                 .unwrap_or_else(get_pos)
         };
-        egui::Area::new(id.clone())
+        egui::Area::new(egui::Id::new(id.clone()))
             // must be top-left of the widget
             .current_pos(pos)
             // should be displayed on foreground
@@ -156,7 +156,7 @@ impl Widget for Plug {
                     plugged: self.plug_to.is_some(),
                     locked: self.locked,
                 }
-                .set(ui.data());
+                .set(ui);
                 // Move the layer top for active plug
                 if self.cable_active {
                     ui.ctx().move_to_top(ui.layer_id());
@@ -211,7 +211,7 @@ impl Widget for Plug {
                 // finally store states
                 plug_state.pos_offset = pos - default_pos;
                 state.update_plug_state(id.clone(), plug_state);
-                state.store_to(ui.data());
+                state.store_to(ui);
 
                 response
             })

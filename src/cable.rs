@@ -11,7 +11,6 @@ use crate::{
     plug::{PlugId, PlugType},
     prelude::*,
     state::State,
-    utils::FAR,
 };
 
 pub type CableId = Id;
@@ -86,9 +85,7 @@ impl Widget for Cable {
             // This is important to make other widgets intractive even when behind a cable
             .interactable(false)
             .show(ui.ctx(), |ui| {
-                let mut cable_state = State::get(ui.data())
-                    .cable_state(&self.id)
-                    .unwrap_or_default();
+                let mut cable_state = State::get(ui).cable_state(&self.id).unwrap_or_default();
 
                 // fixme? This could be more smart.
                 let default_in_pos = next_widget_position + vec2(10.0, 0.0);
@@ -125,8 +122,10 @@ impl Widget for Cable {
                     (1.0, Color32::BLACK),
                 );
 
-                let pointer_pos = ui.input().pointer.interact_pos();
-                let is_close = bezier_close(&bezier, pointer_pos.unwrap_or(FAR), 300.0);
+                let pointer_pos = ui.input(|input| input.pointer.interact_pos());
+                let is_close = pointer_pos
+                    .map(|pos| bezier_close(&bezier, pos, 300.0))
+                    .unwrap_or(false);
 
                 let line_hovered = is_close || cable_state.dragged;
 
@@ -148,13 +147,13 @@ impl Widget for Cable {
                     },
                     bezier,
                 }
-                .set(ui.data());
+                .set(ui);
                 let response = self.widget.unwrap_or_else(|| DefaultCable.into()).ui(ui);
 
                 if response.drag_started() {
                     cable_state.dragged = true;
                     // drag_diff is used to prevent cable from jumping when cable is dragged.
-                    if let Some(origin) = ui.input().pointer.press_origin() {
+                    if let Some(origin) = ui.input(|input| input.pointer.press_origin()) {
                         cable_state.drag_offset = cable_control_pos - origin;
                     } else {
                         // rare case
@@ -165,7 +164,7 @@ impl Widget for Cable {
                     cable_state.dragged = false;
                 }
                 if response.dragged() {
-                    if let Some(pointer_pos) = ui.input().pointer.interact_pos() {
+                    if let Some(pointer_pos) = ui.input(|input| input.pointer.interact_pos()) {
                         // use drag_diff for prevent cable from jumping on click.
                         cable_state.bezier_control_point_offset +=
                             pointer_pos + cable_state.drag_offset - cable_control_pos;
@@ -191,7 +190,7 @@ impl Widget for Cable {
                 }
 
                 // This must be after ui.add(plug) because state might be modified.
-                let mut state = State::get_cloned(ui.data());
+                let mut state = State::get_cloned(ui);
 
                 // this id is used in ResponseExt
                 state
@@ -201,7 +200,7 @@ impl Widget for Cable {
 
                 // finally update the states
                 state.update_cable_state(self.id, cable_state);
-                state.store_to(ui.data());
+                state.store_to(ui);
 
                 response
             })

@@ -1,6 +1,6 @@
-use std::{ops::DerefMut, sync::Arc};
+use std::sync::Arc;
 
-use egui::{util::IdTypeMap, Id};
+use egui::Id;
 use epaint::QuadraticBezierShape;
 
 use crate::cable_control::CableControl;
@@ -15,13 +15,15 @@ pub struct CableParams {
 }
 
 impl CableParams {
-    pub fn get(mut data: impl DerefMut<Target = IdTypeMap>) -> Self {
-        let params = data.get_persisted::<Arc<CableParams>>(Id::null()).unwrap();
-        data.remove::<Arc<CableParams>>(Id::null());
-        Arc::try_unwrap(params).unwrap()
+    pub fn get(ui: &mut egui::Ui) -> Self {
+        ui.data_mut(|data| {
+            let params = data.get_persisted::<Arc<CableParams>>(Id::null()).unwrap();
+            data.remove::<Arc<CableParams>>(Id::null());
+            Arc::try_unwrap(params).unwrap()
+        })
     }
 
-    pub(crate) fn set(self, mut data: impl DerefMut<Target = IdTypeMap>) {
-        data.insert_persisted(Id::null(), Arc::new(self));
+    pub(crate) fn set(self, ui: &mut egui::Ui) {
+        ui.data_mut(|data| data.insert_persisted(Id::null(), Arc::new(self)));
     }
 }

@@ -5,7 +5,7 @@ use egui::{Vec2, Widget};
 
 use crate::{
     custom_widget::CustomWidget, default_port::DefaultPort, id::Id, plug::DraggedPlug,
-    port_params::PortParams, state::State, utils::FAR,
+    port_params::PortParams, state::State,
 };
 
 pub type PortId = Id;
@@ -34,13 +34,13 @@ impl Widget for Port {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         // This widget is not need to use egui::Area
 
-        let mut state = State::get_cloned(ui.data());
+        let mut state = State::get_cloned(ui);
 
         // Render port with params
         PortParams {
             hovered: state.hovered_port_id() == Some(self.port_id.clone()),
         }
-        .set(ui.data());
+        .set(ui);
         let response = self.widget.unwrap_or_else(|| DefaultPort.into()).ui(ui);
 
         // advance generation if this port is rendered twice
@@ -49,7 +49,7 @@ impl Widget for Port {
         state.update_port_pos(self.port_id.clone(), response.rect.left_top());
 
         let dragged_plug = state.dragged_plug().unwrap_or(DraggedPlug {
-            pos: FAR,
+            pos: egui::pos2(-100.0, -100.0), // far
             size: Vec2::ZERO,
         });
 
@@ -68,7 +68,7 @@ impl Widget for Port {
         }
 
         // finally update the state
-        state.store_to(ui.data());
+        state.store_to(ui);
 
         response
     }

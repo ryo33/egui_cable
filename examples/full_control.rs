@@ -3,7 +3,8 @@ use egui::Pos2;
 use egui_cable::prelude::*;
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
+    let mut native_options = eframe::NativeOptions::default();
+    native_options.default_theme = eframe::Theme::Light;
     eframe::run_native(
         "My egui App",
         native_options,
@@ -14,7 +15,8 @@ fn main() {
                 cables: vec![],
             })
         }),
-    );
+    )
+    .expect("Failed to start native application");
 }
 
 struct MyPort {
@@ -69,7 +71,7 @@ impl eframe::App for MyEguiApp {
                 });
             }
             for cable in &mut self.cables {
-                let response = ui.add(Cable::new(
+                let mut response = ui.add(Cable::new(
                     cable.name.clone(),
                     cable
                         .in_plug
@@ -87,7 +89,7 @@ impl eframe::App for MyEguiApp {
                         .pos(cable.out_plug.pos),
                 ));
 
-                let in_plug = response.in_plug();
+                let mut in_plug = response.in_plug();
                 if let Some(to) = in_plug.connected_to() {
                     cable.in_plug.to = Some(to.downcast_ref::<String>().unwrap().clone());
                 }
@@ -103,7 +105,7 @@ impl eframe::App for MyEguiApp {
                 }
                 cable.in_plug.pos = in_plug.next_position();
 
-                let out_plug = response.out_plug();
+                let mut out_plug = response.out_plug();
                 if let Some(to) = out_plug.connected_to() {
                     cable.out_plug.to = Some(to.downcast_ref::<String>().unwrap().clone());
                 }
@@ -122,7 +124,7 @@ impl eframe::App for MyEguiApp {
         });
     }
 
-    fn clear_color(&self, _visuals: &egui::Visuals) -> egui::Rgba {
-        egui::Rgba::WHITE
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        egui::Rgba::WHITE.to_array()
     }
 }

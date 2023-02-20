@@ -6,16 +6,16 @@ use crate::{prelude::*, state::State};
 
 pub trait ResponseExt {
     /// Returns a in-plug response
-    fn in_plug(&self) -> PlugResponse;
+    fn in_plug(&mut self) -> PlugResponse;
     /// Returns a out-plug response
-    fn out_plug(&self) -> PlugResponse;
+    fn out_plug(&mut self) -> PlugResponse;
 }
 
 pub struct PlugResponse(pub(crate) Response);
 
 impl ResponseExt for Response {
-    fn in_plug(&self) -> PlugResponse {
-        let response = State::get(self.ctx.data())
+    fn in_plug(&mut self) -> PlugResponse {
+        let response = State::get_with_ctx(&mut self.ctx)
             .ephemeral
             .plug_responses_of_cable
             .get(&self.id)
@@ -25,8 +25,8 @@ impl ResponseExt for Response {
         PlugResponse(response)
     }
 
-    fn out_plug(&self) -> PlugResponse {
-        let response = State::get(self.ctx.data())
+    fn out_plug(&mut self) -> PlugResponse {
+        let response = State::get_with_ctx(&mut self.ctx)
             .ephemeral
             .plug_responses_of_cable
             .get(&self.id)
@@ -38,8 +38,8 @@ impl ResponseExt for Response {
 }
 
 impl PlugResponse {
-    pub fn connected_to(&self) -> Option<PortId> {
-        let state = State::get(self.0.ctx.data());
+    pub fn connected_to(&mut self) -> Option<PortId> {
+        let state = State::get_with_ctx(&mut self.0.ctx);
         if let Some(Event::Connected { port_id }) = state.ephemeral.event_of_plug.get(&self.0.id) {
             Some(port_id.clone())
         } else {
@@ -47,16 +47,16 @@ impl PlugResponse {
         }
     }
 
-    pub fn disconnected(&self) -> bool {
-        let state = State::get(self.0.ctx.data());
+    pub fn disconnected(&mut self) -> bool {
+        let state = State::get_with_ctx(&mut self.0.ctx);
         matches!(
             state.ephemeral.event_of_plug.get(&self.0.id),
             Some(Event::Disconnected { .. })
         )
     }
 
-    pub fn hovered_on(&self) -> Option<PortId> {
-        let state = State::get(self.0.ctx.data());
+    pub fn hovered_on(&mut self) -> Option<PortId> {
+        let state = State::get_with_ctx(&mut self.0.ctx);
         if let Some(Event::Hovered { port_id }) = state.ephemeral.event_of_plug.get(&self.0.id) {
             Some(port_id.clone())
         } else {

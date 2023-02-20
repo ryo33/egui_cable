@@ -1,6 +1,6 @@
-use std::{ops::DerefMut, sync::Arc};
+use std::sync::Arc;
 
-use egui::{util::IdTypeMap, Id, Vec2};
+use egui::{Id, Vec2};
 
 #[derive(Clone)]
 pub struct PlugParams {
@@ -11,11 +11,11 @@ pub struct PlugParams {
 }
 
 impl PlugParams {
-    pub fn get(mut data: impl DerefMut<Target = IdTypeMap>) -> Arc<Self> {
-        data.get_persisted::<Arc<PlugParams>>(Id::null()).unwrap()
+    pub fn get(ui: &mut egui::Ui) -> Arc<Self> {
+        ui.data_mut(|data| data.get_persisted::<Arc<PlugParams>>(Id::null()).unwrap())
     }
 
-    pub(crate) fn set(self, mut data: impl DerefMut<Target = IdTypeMap>) {
-        data.insert_persisted(Id::null(), Arc::new(self));
+    pub(crate) fn set(self, ui: &mut egui::Ui) {
+        ui.data_mut(|data| data.insert_persisted(Id::null(), Arc::new(self)));
     }
 }

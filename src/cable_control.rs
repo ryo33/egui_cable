@@ -1,6 +1,6 @@
 use egui::{Order, Pos2, Widget};
 
-use crate::{cable::CableId, custom_widget::CustomWidget, state::State, utils::FAR};
+use crate::{cable::CableId, custom_widget::CustomWidget, state::State};
 
 #[derive(Debug)]
 pub struct CableControl {
@@ -11,18 +11,21 @@ pub struct CableControl {
 
 impl Widget for CableControl {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let mut state = State::get_cloned(ui.data());
+        let mut state = State::get_cloned(ui);
         let size = state.cable_control_size(&self.id);
-        egui::Area::new((self.id, "cable_control"))
+        egui::Area::new(egui::Id::new((self.id, "cable_control")))
             // must be top-left of the widget
             .current_pos(if let Some(size) = size {
                 self.pos - size / 2.0
             } else {
-                // Don't render the widget if the size is not available
-                FAR
+                self.pos
             })
             .order(Order::Foreground)
             .show(ui.ctx(), |ui| {
+                if size.is_none() {
+                    // hide cable control for first rendering.
+                    ui.set_visible(false);
+                }
                 // should be displayed on cable bezier
                 ui.ctx().move_to_top(ui.layer_id());
 
@@ -31,7 +34,7 @@ impl Widget for CableControl {
 
                 // update cable control size for calculate the next position of this area
                 state.update_cable_control_size(self.id, response.rect.size());
-                state.store_to(ui.data());
+                state.store_to(ui);
 
                 response
             })
