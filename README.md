@@ -34,7 +34,7 @@ The code is good for studying how to write egui widgets.
 
 ## Examples
 
-Click the images to see the source code.
+Click the images to see the source code. See [/examples](https://github.com/ryo33/egui_cable/blob/main/examples) for more examples.
 
 [![Simple example](https://user-images.githubusercontent.com/8780513/170413124-5400d9b4-8f10-4607-bc37-23acc8c6b842.png)](https://github.com/ryo33/egui_cable/blob/main/examples/simple.rs)
 
