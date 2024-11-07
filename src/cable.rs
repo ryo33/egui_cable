@@ -160,7 +160,7 @@ impl Widget for Cable {
                         cable_state.drag_offset = vec2(0.0, 0.0);
                     }
                 }
-                if response.drag_released() {
+                if response.drag_stopped() {
                     cable_state.dragged = false;
                 }
                 if response.dragged() {
@@ -213,7 +213,6 @@ fn bezier_close(bezier: &QuadraticBezierShape, pointer_pos: Pos2, distance_sq: f
     let distance2 = bezier.points[1].distance(bezier.points[2]);
     let count = distance1 + distance2;
     (0..count as usize)
-        .into_iter()
         .map(|t| bezier.sample(t as f32 / count))
         .any(|point| (point - pointer_pos).length_sq() < distance_sq)
 }

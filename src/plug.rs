@@ -180,7 +180,7 @@ impl Widget for Plug {
                     });
                 }
 
-                if response.drag_released() {
+                if response.drag_stopped() {
                     match (self.plug_to, state.hovered_port_id()) {
                         // Connect event
                         (_, Some(port_id)) => {

@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use egui::{Vec2, Widget};
+use egui_hooks::UseHookExt as _;
 
 use crate::{
     custom_widget::CustomWidget, default_port::DefaultPort, id::Id, plug::DraggedPlug,
@@ -32,44 +33,51 @@ impl Port {
 
 impl Widget for Port {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        // This widget is not need to use egui::Area
+        ui.push_id(self.port_id.clone(), |ui| {
+            // This widget is not need to use egui::Area
 
-        let mut state = State::get_cloned(ui);
+            let mut state = State::get_cloned(ui);
 
-        // Render port with params
-        PortParams {
-            hovered: state.hovered_port_id() == Some(self.port_id.clone()),
-        }
-        .set(ui);
-        let response = self.widget.unwrap_or_else(|| DefaultPort.into()).ui(ui);
+            // Render port with params
+            PortParams {
+                hovered: state.hovered_port_id() == Some(self.port_id.clone()),
+            }
+            .set(ui);
+            let response = self.widget.unwrap_or_else(|| DefaultPort.into()).ui(ui);
 
-        // advance generation if this port is rendered twice
-        state.advance_generation_if_twice(self.port_id.clone());
-        // update port's position used for plug rendering
-        state.update_port_pos(self.port_id.clone(), response.rect.left_top());
+            // advance generation if this port is rendered twice
+            state.advance_generation_if_twice(self.port_id.clone());
+            // update port's position used for plug rendering
+            state.update_port_pos(self.port_id.clone(), response.rect.left_top());
 
-        let dragged_plug = state.dragged_plug().unwrap_or(DraggedPlug {
-            pos: egui::pos2(-100.0, -100.0), // far
-            size: Vec2::ZERO,
-        });
+            let dragged_plug = state.dragged_plug().unwrap_or(DraggedPlug {
+                pos: egui::pos2(-100.0, -100.0), // far
+                size: Vec2::ZERO,
+            });
 
-        // distance between the port and the dragged plug
-        let distance_sq = response.rect.center().distance_sq(dragged_plug.pos);
-        let min_length = |vec: Vec2| vec.x.min(vec.y);
-        let close_distance =
-            (min_length(response.rect.size()) + min_length(dragged_plug.size)) / 2.0;
+            println!("dragged: {:?}", dragged_plug.pos);
+            println!("response: {:?}", response.rect.center());
 
-        // distance required because `response.hovered()` always returns false when plug is interacted
-        let hovered = response.hovered() || distance_sq < close_distance.powi(2);
+            // distance between the port and the dragged plug
+            let distance_sq = response.rect.center().distance_sq(dragged_plug.pos);
+            let min_length = |vec: Vec2| vec.x.min(vec.y);
+            let close_distance =
+                (min_length(response.rect.size()) + min_length(dragged_plug.size)) / 2.0;
 
-        // update hovered port id used for cable connection
-        if hovered {
-            state.update_hovered_port_id(self.port_id);
-        }
+            // distance required because `response.hovered()` always returns false when plug is interacted
+            let hovered = response.hovered() || distance_sq < close_distance.powi(2);
 
-        // finally update the state
-        state.store_to(ui);
+            // update hovered port id used for cable connection
+            if hovered {
+                println!("hoverd: {:?}", self.port_id);
+                state.update_hovered_port_id(self.port_id);
+            }
 
-        response
+            // finally update the state
+            state.store_to(ui);
+
+            response
+        })
+        .inner
     }
 }

@@ -142,7 +142,7 @@ impl State {
         ui.data_mut(|data| {
             Self::clone(
                 &data
-                    .get_persisted::<Arc<State>>(Id::null())
+                    .get_persisted::<Arc<State>>(Id::NULL)
                     .unwrap_or_default(),
             )
         })
@@ -150,21 +150,21 @@ impl State {
 
     pub fn get(ui: &mut egui::Ui) -> Arc<Self> {
         ui.data_mut(|data| {
-            data.get_persisted::<Arc<State>>(Id::null())
+            data.get_persisted::<Arc<State>>(Id::NULL)
                 .unwrap_or_default()
         })
     }
 
     pub fn get_with_ctx(ctx: &mut egui::Context) -> Arc<Self> {
         ctx.data_mut(|data| {
-            data.get_persisted::<Arc<State>>(Id::null())
+            data.get_persisted::<Arc<State>>(Id::NULL)
                 .unwrap_or_default()
         })
     }
 
     pub fn store_to(self, ui: &mut egui::Ui) {
         ui.data_mut(|data| {
-            data.insert_persisted(Id::null(), Arc::new(self));
+            data.insert_persisted(Id::NULL, Arc::new(self));
         });
     }
 }

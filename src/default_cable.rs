@@ -23,7 +23,11 @@ impl Widget for DefaultCable {
         let response = if line_hovered && !plugs_interacted {
             ui.add(cable_control)
         } else {
-            ui.interact(Rect::NOTHING, egui::Id::new("dummy-cable-control"), Sense::focusable_noninteractive())
+            ui.interact(
+                Rect::NOTHING,
+                egui::Id::new("dummy-cable-control"),
+                Sense::focusable_noninteractive(),
+            )
         };
 
         let in_pos = bezier.points[0];
@@ -46,7 +50,7 @@ impl Widget for DefaultCable {
                     center,
                     cable_control_pos.distance(in_pos) / 2.0,
                     cable_visual.fg_stroke,
-                )
+                );
             } else {
                 ui.painter().add(bezier);
             }

@@ -17,13 +17,13 @@ pub struct CableParams {
 impl CableParams {
     pub fn get(ui: &mut egui::Ui) -> Self {
         ui.data_mut(|data| {
-            let params = data.get_persisted::<Arc<CableParams>>(Id::null()).unwrap();
-            data.remove::<Arc<CableParams>>(Id::null());
+            let params = data.get_persisted::<Arc<CableParams>>(Id::NULL).unwrap();
+            data.remove::<Arc<CableParams>>(Id::NULL);
             Arc::try_unwrap(params).unwrap()
         })
     }
 
     pub(crate) fn set(self, ui: &mut egui::Ui) {
-        ui.data_mut(|data| data.insert_persisted(Id::null(), Arc::new(self)));
+        ui.data_mut(|data| data.insert_persisted(Id::NULL, Arc::new(self)));
     }
 }
